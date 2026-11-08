@@ -55,10 +55,26 @@
 
   <!-- APP -->
   <div id="app" class="hidden">
-    <header class="topbar">
-      <div class="lockup">
+    <aside class="sidebar" id="sidebar" aria-label="Secciones">
+      <div class="side-brand">
         <svg class="logo"><use href="#logo" /></svg>
-        <div class="wordmark">PEP</div>
+        <div><div class="wordmark">PEP</div><div class="tagline">Plan Estratégico Personal</div></div>
+      </div>
+      <nav class="side-nav" id="tabbar"></nav>
+      <div class="side-foot">
+        <button data-action="export">Descargar copia</button>
+        <button data-action="logout" class="danger-text">Cerrar sesión</button>
+      </div>
+    </aside>
+    <div class="side-backdrop" id="sideBackdrop"></div>
+
+    <header class="topbar">
+      <div class="top-left">
+        <button class="icon-btn menu-toggle" id="sideToggle" aria-label="Abrir menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+        <div class="lockup top-brand">
+          <svg class="logo"><use href="#logo" /></svg>
+          <div class="wordmark">PEP</div>
+        </div>
       </div>
       <div class="year-switch">
         <button class="icon-btn" id="yearPrev" aria-label="Año anterior"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg></button>
@@ -80,7 +96,6 @@
 
     <main id="view" class="view"></main>
 
-    <nav class="tabbar" id="tabbar"></nav>
   </div>
 
   <!-- SHEET / MODAL -->

@@ -239,9 +239,18 @@
 
   // ---------- Navegación ----------
   $('#tabbar').innerHTML = TABS.map((t) => `<button data-tab="${t.key}" class="${t.key === tab ? 'active' : ''}">${ic(t.key)}<span>${t.label}</span></button>`).join('');
+  const setSide = (open) => { document.body.classList.toggle('side-open', open); };
+  $('#sideToggle').addEventListener('click', () => setSide(!document.body.classList.contains('side-open')));
+  $('#sideBackdrop').addEventListener('click', () => setSide(false));
+  $$('.side-foot button').forEach((b) => b.addEventListener('click', () => {
+    setSide(false);
+    const m = $(`#menu button[data-action="${b.dataset.action}"]`);
+    if (m) m.click();
+  }));
   $('#tabbar').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-tab]');
     if (!b) return;
+    setSide(false);
     tab = b.dataset.tab;
     $$('#tabbar button').forEach((x) => x.classList.toggle('active', x === b));
     window.scrollTo(0, 0);
