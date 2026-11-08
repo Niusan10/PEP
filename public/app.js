@@ -80,13 +80,14 @@
   function emptyYear() {
     const objetivos = {};
     AREAS.forEach((a) => { objetivos[a.key] = [{ text: '', done: false, date: '' }, { text: '', done: false, date: '' }]; });
-    return { lema: '', reto: { text: '', detalle: '', done: false }, objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
+    return { lema: '', retos: [], objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
   }
   function Y() {
     if (!state.years[year]) state.years[year] = emptyYear();
     const y = state.years[year];
     const base = emptyYear();
     for (const k of Object.keys(base)) if (!y[k]) y[k] = base[k];
+    if (y.reto) { if (y.reto.text && !y.retos.length) y.retos.push({ id: uid(), ...y.reto }); delete y.reto; }
     AREAS.forEach((a) => {
       if (!Array.isArray(y.objetivos[a.key])) y.objetivos[a.key] = base.objetivos[a.key];
       while (y.objetivos[a.key].length < 2) y.objetivos[a.key].push({ text: '', done: false, date: '' });
@@ -351,6 +352,7 @@
     const goals = AREAS.flatMap((a) => y.objetivos[a.key]);
     const goalsSet = goals.filter((g) => g.text.trim()).length;
     const goalsDone = goals.filter((g) => g.done).length;
+    const goalsTotal = Math.max(6, goals.filter((g) => g.text.trim()).length);
     const hc = (k) => y.habitos.filter((h) => h.status === k).length;
     const trips = yearList(y.viajes, 'inicio');
     const tripMonths = new Set(trips.map((t) => monthOf(t.inicio))).size;
@@ -369,23 +371,28 @@
 
     return `
       <div class="section-head"><div class="kicker">Plan ${year}</div><h2>${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
-        ${y.lema ? '' : '<p>Ponle un lema a tu año tocando la tarjeta de abajo.</p>'}</div>
-      <div class="card link" id="mottoCard">
-        <div class="card-title" style="margin-bottom:8px"><h3>${badge('objetivos', 'accent')}Reto profesional</h3>
-          ${y.reto.text ? `<span class="tag ${y.reto.done ? 'green' : ''}" style="${y.reto.done ? '' : 'background:var(--accent-soft);color:var(--accent)'}">${y.reto.done ? 'Conseguido' : 'En marcha'}</span>` : ''}</div>
-        ${y.reto.text ? `<div style="font-weight:500;font-size:16px">${esc(y.reto.text)}</div>${y.reto.detalle ? `<div class="muted" style="font-size:13.5px;margin-top:4px">${esc(y.reto.detalle)}</div>` : ''}`
-          : '<div class="empty">Toca para definir el lema y el reto profesional del año.</div>'}
+        <p><button class="linkbtn" id="editLema">${y.lema ? 'Editar lema' : '+ Añadir lema del año'}</button></p></div>
+      <div class="card">
+        <div class="card-title"><h3>${badge('objetivos', 'accent')}Retos profesionales</h3><button class="btn sm" id="addReto">${ic('plus')}Reto</button></div>
+        ${y.retos.length ? y.retos.map((r) => `
+          <div class="goal ${r.done ? 'done' : ''}">
+            <button class="check ${r.done ? 'on' : ''}" data-reto-check="${r.id}" aria-label="Marcar conseguido">${ic('check', '')}</button>
+            <div class="goal-body" data-reto="${r.id}" style="cursor:pointer">
+              <div style="font-weight:500;font-size:15px;${r.done ? 'color:var(--text-2)' : ''}">${esc(r.text)}</div>
+              ${r.detalle ? `<div class="muted" style="font-size:13px;margin-top:2px">${esc(r.detalle)}</div>` : ''}
+            </div>
+          </div>`).join('') : '<div class="empty">Añade tus retos profesionales del año.</div>'}
       </div>
       <div class="card"><div class="hero">${ring(pct)}
         <div><div class="t">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
         <div class="s">${isCurrent ? `Quedan ${Math.ceil((end - now) / 86400000)} días del año` : ''}</div>
-        <div class="progress green" style="margin-top:10px"><i style="width:${(goalsDone / 6) * 100}%"></i></div>
-        <div class="s">${goalsDone} de 6 objetivos conseguidos</div></div></div></div>
+        <div class="progress green" style="margin-top:10px"><i style="width:${(goalsDone / goalsTotal) * 100}%"></i></div>
+        <div class="s">${goalsDone} de ${goalsTotal} objetivos conseguidos</div></div></div></div>
 
       <div class="card link" data-go="objetivos">
-        <div class="card-title"><h3>${badge('objetivos', 'green')}Objetivos</h3><span class="meta">${goalsDone}/6</span></div>
-        ${AREAS.map((a) => { const l = y.objetivos[a.key]; const d = l.filter((g) => g.done).length;
-          return `<div class="prow"><div class="top"><span>${a.label}</span><span>${d}/2</span></div><div class="progress green"><i style="width:${d * 50}%"></i></div></div>`; }).join('')}
+        <div class="card-title"><h3>${badge('objetivos', 'green')}Objetivos</h3><span class="meta">${goalsDone}/${goalsTotal}</span></div>
+        ${AREAS.map((a) => { const l = y.objetivos[a.key]; const d = l.filter((g) => g.done).length; const t = Math.max(2, l.filter((g) => g.text.trim()).length);
+          return `<div class="prow"><div class="top"><span>${a.label}</span><span>${d}/${t}</span></div><div class="progress green"><i style="width:${(d / t) * 100}%"></i></div></div>`; }).join('')}
         ${goalsSet < 6 ? `<p class="insight">Te faltan <b>${6 - goalsSet}</b> objetivo${6 - goalsSet > 1 ? 's' : ''} por definir.</p>` : ''}
       </div>
 
@@ -419,10 +426,20 @@
           <div class="stat gold"><div class="n">${fel.length}</div><div class="l">Momentos de felicidad${isCurrent ? `<br>${inMonth(fel, 'fecha')} este mes` : ''}</div></div>
           <div class="stat green"><div class="n">${dar.length}</div><div class="l">Dar sin esperar nada${isCurrent ? `<br>${inMonth(dar, 'fecha')} este mes` : ''}</div></div>
         </div>
-      </div>`;
+      </div>
+      <button class="fab" id="quickAdd">${ic('plus')}<span>Apuntar</span></button>`;
   }
   function bindResumen(v) {
-    $('#mottoCard', v).addEventListener('click', () => mottoSheet());
+    $('#editLema', v).addEventListener('click', () => lemaSheet());
+    $('#addReto', v).addEventListener('click', () => retoSheet(null));
+    $('#quickAdd', v).addEventListener('click', () => quickAddSheet());
+    $$('[data-reto]', v).forEach((el) => el.addEventListener('click', () => retoSheet(Y().retos.find((r) => r.id === el.dataset.reto))));
+    $$('[data-reto-check]', v).forEach((b) => b.addEventListener('click', () => {
+      const r = Y().retos.find((x) => x.id === b.dataset.retoCheck);
+      r.done = !r.done; r.date = r.done ? (r.date || todayISO()) : '';
+      if (r.done) toast('Reto conseguido');
+      commit();
+    }));
     $$('[data-go]', v).forEach((c) => c.addEventListener('click', () => {
       tab = c.dataset.go;
       $$('#tabbar button').forEach((x) => x.classList.toggle('active', x.dataset.tab === tab));
@@ -431,24 +448,64 @@
     }));
   }
 
-  function mottoSheet() {
+  function lemaSheet() {
     const y = Y();
     openSheet(`
-      <h3>Lema y reto ${year}</h3>
+      <h3>Lema ${year}</h3>
       <form id="lf">
         <label>Lema del año<input name="lema" value="${esc(y.lema)}" placeholder="Ej. Elegere & Love" /></label>
-        <label>Reto profesional<input name="text" value="${esc(y.reto.text)}" placeholder="Ej. Ser libre" /></label>
-        <label>Descripción<textarea name="detalle" placeholder="Qué significa para ti">${esc(y.reto.detalle)}</textarea></label>
-        <label class="inline-check"><input type="checkbox" name="done" ${y.reto.done ? 'checked' : ''} /> Reto conseguido</label>
         <div class="sheet-actions"><button type="submit" class="btn primary">Guardar</button></div>
       </form>`, (el) => {
-      $('#lf', el).addEventListener('submit', (e) => {
+      $('#lf', el).addEventListener('submit', (e) => { e.preventDefault(); y.lema = e.target.lema.value.trim(); closeSheet(); commit(); });
+    });
+  }
+  function retoSheet(r) {
+    const y = Y();
+    const isNew = !r;
+    const d = r || { text: '', detalle: '', done: false };
+    openSheet(`
+      <h3>${isNew ? 'Nuevo reto profesional' : 'Editar reto'}</h3>
+      <form id="rf">
+        <label>Reto<input name="text" required value="${esc(d.text)}" placeholder="Ej. Ser libre" /></label>
+        <label>Descripción<textarea name="detalle" placeholder="Qué significa para ti">${esc(d.detalle)}</textarea></label>
+        <label class="inline-check"><input type="checkbox" name="done" ${d.done ? 'checked' : ''} /> Reto conseguido</label>
+        <div class="sheet-actions">
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
+          <button type="submit" class="btn primary">Guardar</button>
+        </div>
+      </form>`, (el) => {
+      $('#rf', el).addEventListener('submit', (e) => {
         e.preventDefault();
         const f = e.target;
-        y.lema = f.lema.value.trim();
-        y.reto = { text: f.text.value.trim(), detalle: f.detalle.value.trim(), done: f.done.checked };
+        const vals = { text: f.text.value.trim(), detalle: f.detalle.value.trim(), done: f.done.checked };
+        if (!vals.text) return;
+        vals.date = vals.done ? ((r && r.date) || todayISO()) : '';
+        if (isNew) y.retos.push({ id: uid(), ...vals }); else Object.assign(r, vals);
         closeSheet(); commit();
       });
+      const del = $('#del', el);
+      if (del) del.addEventListener('click', () => {
+        if (!confirm('¿Eliminar este reto?')) return;
+        y.retos = y.retos.filter((x) => x.id !== r.id);
+        closeSheet(); commit();
+      });
+    });
+  }
+  function quickAddSheet() {
+    const opts = [
+      ['viajes', 'Viaje', 'sky', () => tripSheet(null)],
+      ['luz', 'Momento feliz', 'gold', () => { luzFilter = 'felicidad'; happySheet(null); }],
+      ['dar', 'Dar sin esperar', 'green', () => { luzFilter = 'dar'; giveSheet(null); }],
+      ['borrachera', 'Borrachera', 'night', () => darkSheet(null, 'borrachera')],
+      ['atracon', 'Atracón', 'night', () => darkSheet(null, 'atracon')],
+      ['malo', 'Ponerme malo', 'night', () => darkSheet(null, 'malo')],
+      ['habitos', 'Hábito', 'accent', () => habitSheet(null)],
+      ['fisica', 'Peso', 'accent', () => pesoSheet(null)],
+      ['objetivos', 'Objetivo', 'green', () => goalSheet('fisica')],
+      ['objetivos', 'Reto profesional', 'accent', () => retoSheet(null)],
+    ];
+    openSheet(`<h3>¿Qué quieres apuntar?</h3><div class="qgrid">${opts.map((o, i) => `<button class="qbtn" data-q="${i}">${badge(o[0], o[2])}<span>${o[1]}</span></button>`).join('')}</div>`, (el) => {
+      $$('[data-q]', el).forEach((b) => b.addEventListener('click', () => { closeSheet(); opts[Number(b.dataset.q)][3](); }));
     });
   }
 
@@ -456,12 +513,12 @@
   function viewObjetivos() {
     const y = Y();
     return `
-      <div class="section-head"><div class="kicker">Objetivos ${year}</div><h2>Dos objetivos por área</h2>
-        <p>Marca cada objetivo cuando lo consigas; se guarda la fecha.</p></div>
+      <div class="section-head"><div class="kicker">Objetivos ${year}</div><h2>Objetivos por área</h2>
+        <p>Dos por área como base. Márcalos al conseguirlos y se guarda la fecha.</p></div>
       ${AREAS.map((a) => `
         <div class="card">
           <div class="card-title"><h3>${badge(a.icon, 'green')}${a.label}</h3>
-            <span class="meta">${y.objetivos[a.key].filter((g) => g.done).length}/2</span></div>
+            <span class="meta">${y.objetivos[a.key].filter((g) => g.done).length}/${Math.max(2, y.objetivos[a.key].filter((g) => g.text.trim()).length)}</span></div>
           ${y.objetivos[a.key].map((g, i) => `
             <div class="goal ${g.done ? 'done' : ''}">
               <button class="check ${g.done ? 'on' : ''}" data-area="${a.key}" data-i="${i}" aria-label="Marcar conseguido">${ic('check', '')}</button>
@@ -469,9 +526,33 @@
                 <textarea class="goal-text" rows="1" data-area="${a.key}" data-i="${i}" placeholder="Escribe el objetivo ${i + 1}">${esc(g.text)}</textarea>
                 ${g.done ? `<div class="goal-meta">Conseguido el <input type="date" data-date-area="${a.key}" data-i="${i}" value="${esc(g.date)}" /></div>` : ''}
               </div>
+              ${i >= 2 ? `<button class="icon-btn del-goal" data-del-area="${a.key}" data-i="${i}" aria-label="Eliminar objetivo"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>` : ''}
             </div>`).join('')}
+          <button class="linkbtn" data-add-goal="${a.key}" style="margin-top:10px">+ Añadir objetivo</button>
         </div>`).join('')}
       ${pesoCard(y)}`;
+  }
+  function goalSheet(area) {
+    openSheet(`
+      <h3>Nuevo objetivo</h3>
+      <form id="gof">
+        <label>Área<select name="area">${AREAS.map((a) => `<option value="${a.key}" ${a.key === area ? 'selected' : ''}>${a.label}</option>`).join('')}</select></label>
+        <label>Objetivo<textarea name="text" required placeholder="Ej. Correr una media maratón"></textarea></label>
+        <div class="sheet-actions"><button type="submit" class="btn primary">Guardar</button></div>
+      </form>`, (el) => {
+      $('#gof', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const text = f.text.value.trim();
+        if (!text) return;
+        const list = Y().objetivos[f.area.value];
+        const empty = list.find((g) => !g.text.trim());
+        if (empty) empty.text = text; else list.push({ text, done: false, date: '' });
+        tab = 'objetivos';
+        $$('#tabbar button').forEach((x) => x.classList.toggle('active', x.dataset.tab === tab));
+        closeSheet(); commit(); toast('Objetivo añadido');
+      });
+    });
   }
   function isoWeek(s) {
     const d = parseISO(s); d.setHours(0, 0, 0, 0);
@@ -549,6 +630,12 @@
   function bindObjetivos(v) {
     const y = Y();
     $('#addPeso', v).addEventListener('click', () => pesoSheet(null));
+    $$('[data-add-goal]', v).forEach((b) => b.addEventListener('click', () => goalSheet(b.dataset.addGoal)));
+    $$('[data-del-area]', v).forEach((b) => b.addEventListener('click', () => {
+      if (!confirm('¿Eliminar este objetivo?')) return;
+      y.objetivos[b.dataset.delArea].splice(Number(b.dataset.i), 1);
+      commit();
+    }));
     $$('[data-peso]', v).forEach((el) => el.addEventListener('click', () => pesoSheet(y.pesos.find((p) => p.id === el.dataset.peso))));
     const grow = (el) => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
     $$('.goal-text', v).forEach((inp) => {
@@ -801,11 +888,13 @@
           return `<div class="item" data-id="${x.id}">${dateBox(x.fecha)}<div class="body"><div class="title">${ic(d.icon)}${d.one}</div>
             <div class="desc">${WEEKDAYS[parseISO(x.fecha).getDay()]}${x.nota ? ' · ' + esc(x.nota) : ''}</div></div></div>`;
         }).join('') : '<div class="empty">Nada registrado este año.</div>'}
-      </div>`;
+      </div>
+      ${fab('addDark', 'Registro')}`;
   }
   function bindOscuridad(v) {
     const y = Y();
     $$('[data-add]', v).forEach((b) => b.addEventListener('click', () => darkSheet(null, b.dataset.add)));
+    $('#addDark', v).addEventListener('click', () => darkSheet(null, 'borrachera'));
     $$('.item[data-id]', v).forEach((el) => el.addEventListener('click', () => darkSheet(y.oscuridad.find((x) => x.id === el.dataset.id))));
   }
   function darkSheet(x, tipo) {
@@ -864,7 +953,7 @@
         <div class="section-head"><div class="kicker">Luz ${year}</div><h2>Lo que me da luz</h2>
           <p>Momentos en los que vibras, para encontrar patrones.</p></div>
         ${seg}
-        <div class="card"><div class="card-title"><h3>${badge('luz', 'gold')}Cuándo soy más feliz</h3><button class="btn sm" id="editFeliz">Editar</button></div>
+        <div class="card"><div class="card-title"><h3>${badge('luz', 'gold')}Cuándo soy más feliz</h3><div style="display:flex;gap:6px"><button class="btn sm" id="addFeliz">${ic('plus')}Añadir</button><button class="btn sm ghost" id="editFeliz">Editar</button></div></div>
           ${y.felizCuando.length ? `<ol class="olist">${y.felizCuando.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : '<div class="empty">Escribe las situaciones en las que más vibras.</div>'}
         </div>
         <div class="card"><div class="card-title"><h3>${badge('chart', 'gold')}Patrones de tus momentos</h3></div>
@@ -895,6 +984,21 @@
     const y = Y();
     $$('.seg button', v).forEach((b) => b.addEventListener('click', () => { luzFilter = b.dataset.f; render(); }));
     $('#addLuz', v).addEventListener('click', () => (luzFilter === 'felicidad' ? happySheet(null) : giveSheet(null)));
+    const af = $('#addFeliz', v);
+    if (af) af.addEventListener('click', () => openSheet(`
+      <h3>Cuándo soy más feliz</h3>
+      <form id="faf">
+        <label>Nueva situación<textarea name="t" required placeholder="Ej. Cuando viajo a un sitio nuevo con amigos"></textarea></label>
+        <div class="sheet-actions"><button type="submit" class="btn primary">Añadir</button></div>
+      </form>`, (el) => {
+      $('#faf', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const t = e.target.t.value.trim();
+        if (!t) return;
+        y.felizCuando.push(t);
+        closeSheet(); commit(); toast('Añadido');
+      });
+    }));
     const ef = $('#editFeliz', v);
     if (ef) ef.addEventListener('click', () => openSheet(`
       <h3>Cuándo soy más feliz</h3>

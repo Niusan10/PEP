@@ -310,3 +310,9 @@ label > input, label > textarea, label > select { margin-top: 6px; }
 .olist { margin: 0; padding-left: 22px; display: grid; gap: 9px; font-size: 14px; color: var(--text-2); }
 .olist li::marker { color: var(--gold); font-weight: 700; }
 .card-title .btn.sm .ico { width: 14px; height: 14px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-size: 13.5px; font-weight: 500; cursor: pointer; }
+.del-goal { padding: 4px; margin-top: 1px; }
+.del-goal svg { width: 16px; height: 16px; }
+.qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qbtn { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; font-size: 14px; font-weight: 500; }
+.qbtn:hover { border-color: var(--line-2); }
