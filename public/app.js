@@ -20,15 +20,46 @@
   const yearOf = (s) => Number(String(s).slice(0, 4));
   const byDateDesc = (k) => (a, b) => String(b[k]).localeCompare(String(a[k]));
 
+  // Iconos de línea (24x24, trazo)
+  const ICONS = {
+    resumen: '<rect x="3.5" y="3.5" width="7" height="8" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.8"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.8"/>',
+    objetivos: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.2"/>',
+    habitos: '<path d="M17 3.5l3.5 3.5-3.5 3.5"/><path d="M3.5 11.5V10a3 3 0 0 1 3-3h14"/><path d="M7 20.5L3.5 17 7 13.5"/><path d="M20.5 12.5V14a3 3 0 0 1-3 3h-14"/>',
+    viajes: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.3 2.4 3.5 5.2 3.5 8.5s-1.2 6.1-3.5 8.5c-2.3-2.4-3.5-5.2-3.5-8.5S9.7 5.9 12 3.5z"/>',
+    oscuridad: '<path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.2 6.2 0 0 0 10.1 10.1z"/>',
+    luz: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2M12 19.2v2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M2.8 12h2M19.2 12h2M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/>',
+    espiritual: '<path d="M12 3.5l1.9 5.6 5.6 1.9-5.6 1.9L12 18.5l-1.9-5.6L4.5 11l5.6-1.9z"/><path d="M18.5 16.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+    fisica: '<path d="M3 12.5h4l2.5-6 5 12 2.5-6h4"/>',
+    mental: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z"/>',
+    borrachera: '<path d="M7.5 3.5h9l-.6 5.2a3.9 3.9 0 0 1-7.8 0z"/><path d="M12 12.6v7.9M8.5 20.5h7"/>',
+    atracon: '<path d="M7 3.5v17M4.5 3.5v5a2.5 2.5 0 0 0 5 0v-5"/><path d="M17.5 20.5v-17c-2 0-3.5 2.2-3.5 5.5s1.5 4.5 3.5 4.5"/>',
+    malo: '<path d="M14 14.6V5.5a2 2 0 0 0-4 0v9.1a4 4 0 1 0 4 0z"/><path d="M12 15v-4"/>',
+    dar: '<path d="M12 20s-7.5-4.5-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.5 12 20 12 20z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  };
+  const ic = (name, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+  const badge = (name, tone = '') => `<span class="ico-badge ${tone}">${ic(name)}</span>`;
+
   const AREAS = [
-    { key: 'espiritual', label: 'Espiritual', icon: '✦' },
-    { key: 'fisica', label: 'Física', icon: '◉' },
-    { key: 'mental', label: 'Mental', icon: '◈' },
+    { key: 'espiritual', label: 'Espiritual', icon: 'espiritual' },
+    { key: 'fisica', label: 'Física', icon: 'fisica' },
+    { key: 'mental', label: 'Mental', icon: 'mental' },
   ];
   const DARK = [
-    { key: 'borrachera', label: 'Borracheras', one: 'Borrachera', icon: '🍷' },
-    { key: 'atracon', label: 'Atracones', one: 'Atracón', icon: '🍔' },
-    { key: 'malo', label: 'Ponerme malo', one: 'Ponerme malo', icon: '🤒' },
+    { key: 'borrachera', label: 'Borracheras', one: 'Borrachera', icon: 'borrachera' },
+    { key: 'atracon', label: 'Atracones', one: 'Atracón', icon: 'atracon' },
+    { key: 'malo', label: 'Ponerme malo', one: 'Ponerme malo', icon: 'malo' },
+  ];
+  const TABS = [
+    { key: 'resumen', label: 'Resumen' },
+    { key: 'objetivos', label: 'Objetivos' },
+    { key: 'habitos', label: 'Hábitos' },
+    { key: 'viajes', label: 'Viajes' },
+    { key: 'oscuridad', label: 'Oscuridad' },
+    { key: 'luz', label: 'Luz' },
   ];
   const HABIT_COLS = [
     { key: 'conseguido', label: 'Conseguidos' },
@@ -86,6 +117,7 @@
     const el = $('#saveState');
     el.textContent = txt;
     el.classList.toggle('err', !!err);
+    el.classList.toggle('busy', !err && /…/.test(txt));
   }
 
   function persistLocal() {
@@ -107,10 +139,10 @@
     pending = false;
     try {
       await api('/api/data', { method: 'PUT', body: JSON.stringify({ data: state }) });
-      setSaveState(pending ? 'Guardando…' : 'Guardado ✓');
+      setSaveState(pending ? 'Guardando…' : 'Guardado');
     } catch (e) {
       pending = true;
-      setSaveState('Sin guardar ⚠', true);
+      setSaveState('Sin guardar', true);
       if (e.message !== 'No autorizado') toast('No se pudo guardar. Reintentaré.');
       setTimeout(flush, 5000);
     } finally {
@@ -135,7 +167,7 @@
         if (cached) { try { state = JSON.parse(cached); pending = true; } catch { /* nada */ } }
       }
       loaded = true;
-      setSaveState('Guardado ✓');
+      setSaveState('Guardado');
       persistLocal();
       if (pending) flush();
     } catch (e) {
@@ -205,6 +237,7 @@
   $('#sheetWrap').addEventListener('click', (e) => { if (e.target.hasAttribute('data-close')) closeSheet(); });
 
   // ---------- Navegación ----------
+  $('#tabbar').innerHTML = TABS.map((t) => `<button data-tab="${t.key}" class="${t.key === tab ? 'active' : ''}">${ic(t.key)}<span>${t.label}</span></button>`).join('');
   $('#tabbar').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-tab]');
     if (!b) return;
@@ -246,7 +279,7 @@
       if (!confirm('¿Sustituir todos los datos actuales por los de la copia?')) return;
       state = data;
       commit();
-      toast('Copia importada');
+      toast('Copia restaurada');
     } catch (err) {
       toast('No se pudo importar: ' + err.message);
     } finally {
@@ -258,7 +291,7 @@
   function monthBars(counts, cls = '') {
     const max = Math.max(1, ...counts);
     return `<div class="months ${cls}">${counts.map((c, i) => `
-      <div class="col"><span class="v">${c || ''}</span>
+      <div class="col ${year === new Date().getFullYear() && i === new Date().getMonth() ? 'now' : ''}"><span class="v">${c || ''}</span>
         <div class="bar ${c ? '' : 'zero'}" style="height:${c ? Math.max(8, (c / max) * 78) : 2}px"></div>
         <span class="m">${MONTHS[i].slice(0, 1)}</span></div>`).join('')}</div>`;
   }
@@ -302,6 +335,12 @@
   }
 
   // ----- Resumen -----
+  function ring(pct, color = 'var(--accent)') {
+    const r = 32, c = 2 * Math.PI * r;
+    return `<div class="ring"><svg viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="7"/>
+      <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct / 100)}"/></svg>
+      <div class="lbl">${pct}%</div></div>`;
+  }
   function viewResumen() {
     const y = Y();
     const now = new Date();
@@ -319,56 +358,58 @@
     const dar = yearList(y.dar, 'fecha');
     const thisMonth = now.getMonth();
     const inMonth = (l, k) => l.filter((x) => isCurrent && monthOf(x[k]) === thisMonth).length;
-
     const sinceLast = (tipo) => {
       const l = y.oscuridad.filter((x) => x.tipo === tipo).sort(byDateDesc('fecha'));
-      if (!l.length) return '—';
+      if (!l.length) return 'sin registros';
       const d = daysBetween(l[0].fecha, todayISO());
-      return d < 0 ? '—' : d;
+      return d < 0 ? '' : d === 0 ? 'hoy' : `${d} días sin`;
     };
+    const proc = y.habitos.filter((h) => h.status === 'proceso');
 
     return `
-      <div class="section-head"><div><div class="kicker">Plan ${year}</div><h2>Tu año, de un vistazo</h2>
-        <p>${isCurrent ? `Llevas el ${pct}% del año · ${now.getDate()} de ${MONTHS_FULL[thisMonth]}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</p></div></div>
-      <div class="card"><div class="progress"><i style="width:${pct}%"></i></div></div>
+      <div class="section-head"><div class="kicker">Plan ${year}</div><h2>Resumen del año</h2></div>
+      <div class="card"><div class="hero">${ring(pct)}
+        <div><div class="t">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
+        <div class="s">${isCurrent ? `Quedan ${Math.ceil((end - now) / 86400000)} días del año` : ''}</div>
+        <div class="progress green" style="margin-top:10px"><i style="width:${(goalsDone / 6) * 100}%"></i></div>
+        <div class="s">${goalsDone} de 6 objetivos conseguidos</div></div></div></div>
 
-      <div class="card" data-go="objetivos">
-        <div class="card-title"><h3>◆ Objetivos</h3><span class="muted">${goalsDone}/6</span></div>
-        <div class="progress"><i style="width:${(goalsDone / 6) * 100}%; background: var(--green)"></i></div>
-        <p class="muted" style="font-size:13px;margin:10px 0 0">${goalsSet < 6 ? `Te faltan ${6 - goalsSet} objetivos por definir.` : 'Todos los objetivos definidos.'}</p>
+      <div class="card link" data-go="objetivos">
+        <div class="card-title"><h3>${badge('objetivos', 'green')}Objetivos</h3><span class="meta">${goalsDone}/6</span></div>
+        ${AREAS.map((a) => { const l = y.objetivos[a.key]; const d = l.filter((g) => g.done).length;
+          return `<div class="prow"><div class="top"><span>${a.label}</span><span>${d}/2</span></div><div class="progress green"><i style="width:${d * 50}%"></i></div></div>`; }).join('')}
+        ${goalsSet < 6 ? `<p class="insight">Te faltan <b>${6 - goalsSet}</b> objetivo${6 - goalsSet > 1 ? 's' : ''} por definir.</p>` : ''}
       </div>
 
-      <div class="card" data-go="habitos">
-        <div class="card-title"><h3>↻ Hábitos</h3></div>
+      <div class="card link" data-go="habitos">
+        <div class="card-title"><h3>${badge('habitos', 'accent')}Hábitos</h3></div>
         <div class="stats">
           <div class="stat green"><div class="n">${hc('conseguido')}</div><div class="l">Conseguidos</div></div>
-          <div class="stat gold"><div class="n">${hc('proceso')}</div><div class="l">En proceso</div></div>
+          <div class="stat accent"><div class="n">${hc('proceso')}</div><div class="l">En proceso</div></div>
           <div class="stat night"><div class="n">${hc('banquillo')}</div><div class="l">Banquillo</div></div>
         </div>
-        ${y.habitos.filter((h) => h.status === 'proceso').map((h) => {
-          const d = habitDays(h);
-          return `<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(h.name)}</span><span class="muted">${d}/${HABIT_GOAL} días</span></div>
-          <div class="progress" style="margin-top:6px"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div></div>`;
-        }).join('')}
+        ${proc.map((h) => { const d = habitDays(h);
+          return `<div class="prow"><div class="top"><span>${esc(h.name)}</span><span>${d}/${HABIT_GOAL} días</span></div>
+          <div class="progress"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div></div>`; }).join('')}
       </div>
 
-      <div class="card" data-go="viajes">
-        <div class="card-title"><h3>✈ Viajes</h3><span class="muted">${trips.length} viajes · ${tripMonths}/12 meses</span></div>
-        ${monthBars(countByMonth(y.viajes, 'inicio'), 'blue')}
+      <div class="card link" data-go="viajes">
+        <div class="card-title"><h3>${badge('viajes', 'sky')}Viajes</h3><span class="meta">${trips.length} viajes · ${tripMonths}/12 meses</span></div>
+        ${monthBars(countByMonth(y.viajes, 'inicio'), 'sky')}
       </div>
 
-      <div class="card" data-go="oscuridad">
-        <div class="card-title"><h3>☾ Oscuridad</h3><span class="muted">${dark.length} este año</span></div>
+      <div class="card link" data-go="oscuridad">
+        <div class="card-title"><h3>${badge('oscuridad', 'night')}Oscuridad</h3><span class="meta">${dark.length} registros</span></div>
         <div class="stats">
-          ${DARK.map((d) => `<div class="stat night"><div class="n">${dark.filter((x) => x.tipo === d.key).length}</div><div class="l">${d.icon} ${d.label}<br><span style="opacity:.8">${sinceLast(d.key)} días sin</span></div></div>`).join('')}
+          ${DARK.map((d) => `<div class="stat night"><div class="n">${dark.filter((x) => x.tipo === d.key).length}</div><div class="l">${d.label}<br>${sinceLast(d.key)}</div></div>`).join('')}
         </div>
       </div>
 
-      <div class="card" data-go="luz">
-        <div class="card-title"><h3>☀ Luz</h3></div>
+      <div class="card link" data-go="luz">
+        <div class="card-title"><h3>${badge('luz', 'gold')}Luz</h3></div>
         <div class="stats" style="grid-template-columns:1fr 1fr">
-          <div class="stat gold"><div class="n">${fel.length}</div><div class="l">Momentos felices${isCurrent ? ` · ${inMonth(fel, 'fecha')} este mes` : ''}</div></div>
-          <div class="stat green"><div class="n">${dar.length}</div><div class="l">Veces que di sin esperar${isCurrent ? ` · ${inMonth(dar, 'fecha')} este mes` : ''}</div></div>
+          <div class="stat gold"><div class="n">${fel.length}</div><div class="l">Momentos de felicidad${isCurrent ? `<br>${inMonth(fel, 'fecha')} este mes` : ''}</div></div>
+          <div class="stat green"><div class="n">${dar.length}</div><div class="l">Dar sin esperar nada${isCurrent ? `<br>${inMonth(dar, 'fecha')} este mes` : ''}</div></div>
         </div>
       </div>`;
   }
@@ -385,17 +426,17 @@
   function viewObjetivos() {
     const y = Y();
     return `
-      <div class="section-head"><div><div class="kicker">Objetivos ${year}</div><h2>Dos por cada parte de tu vida</h2>
-        <p>Toca el círculo cuando lo consigas.</p></div></div>
+      <div class="section-head"><div class="kicker">Objetivos ${year}</div><h2>Dos objetivos por área</h2>
+        <p>Marca cada objetivo cuando lo consigas; se guarda la fecha.</p></div>
       ${AREAS.map((a) => `
         <div class="card">
-          <div class="card-title"><h3><span class="area-icon">${a.icon}</span>${a.label}</h3>
-            <span class="muted">${y.objetivos[a.key].filter((g) => g.done).length}/2</span></div>
+          <div class="card-title"><h3>${badge(a.icon, 'green')}${a.label}</h3>
+            <span class="meta">${y.objetivos[a.key].filter((g) => g.done).length}/2</span></div>
           ${y.objetivos[a.key].map((g, i) => `
             <div class="goal ${g.done ? 'done' : ''}">
-              <button class="check ${g.done ? 'on' : ''}" data-area="${a.key}" data-i="${i}" aria-label="Marcar conseguido">✓</button>
+              <button class="check ${g.done ? 'on' : ''}" data-area="${a.key}" data-i="${i}" aria-label="Marcar conseguido">${ic('check', '')}</button>
               <div class="goal-body">
-                <input class="goal-text" data-area="${a.key}" data-i="${i}" value="${esc(g.text)}" placeholder="Objetivo ${i + 1}…" />
+                <input class="goal-text" data-area="${a.key}" data-i="${i}" value="${esc(g.text)}" placeholder="Escribe el objetivo ${i + 1}" />
                 ${g.done ? `<div class="goal-meta">Conseguido el <input type="date" data-date-area="${a.key}" data-i="${i}" value="${esc(g.date)}" /></div>` : ''}
               </div>
             </div>`).join('')}
@@ -411,7 +452,7 @@
       const g = y.objetivos[b.dataset.area][b.dataset.i];
       g.done = !g.done;
       g.date = g.done ? (g.date || todayISO()) : '';
-      if (g.done) toast('¡Objetivo conseguido! 🎉');
+      if (g.done) toast('Objetivo conseguido');
       commit();
     }));
     $$('[data-date-area]', v).forEach((inp) => inp.addEventListener('change', () => {
@@ -419,6 +460,8 @@
       commit(false);
     }));
   }
+
+  const fab = (id, label) => `<button class="fab" id="${id}">${ic('plus')}<span>${label}</span></button>`;
 
   // ----- Hábitos -----
   function habitDays(h) {
@@ -432,16 +475,16 @@
     const prev = state.years[year - 1];
     const canImport = !y.habitos.length && prev && prev.habitos && prev.habitos.length;
     const desc = {
-      conseguido: `Más de ${HABIT_GOAL} días seguidos. Ya forman parte de ti.`,
-      proceso: 'En la lucha: cuenta los días seguidos y reinicia si fallas.',
-      banquillo: 'Pendientes, aún sin intentar. Uno al mes.',
+      conseguido: `Más de ${HABIT_GOAL} días seguidos: ya forman parte de tu rutina.`,
+      proceso: 'Cuenta los días seguidos. Si fallas, reinicia la racha.',
+      banquillo: 'Pendientes de empezar. Idealmente, uno nuevo cada mes.',
     }[habitFilter];
     return `
-      <div class="section-head"><div><div class="kicker">Hábitos ${year}</div><h2>Consolidar, uno a uno</h2><p>${desc}</p></div></div>
-      <div class="seg">${HABIT_COLS.map((c) => `<button data-f="${c.key}" class="${c.key === habitFilter ? 'active' : ''}">${c.label} <span class="cnt">${y.habitos.filter((h) => h.status === c.key).length}</span></button>`).join('')}</div>
-      ${canImport ? `<div class="card"><p style="margin:0 0 10px">Este año aún no tiene hábitos.</p><button class="btn primary sm" id="importHabits">Traer hábitos de ${year - 1}</button></div>` : ''}
-      ${list.length ? list.map(habitCard).join('') : `<div class="empty">No hay hábitos aquí todavía. Pulsa + para añadir uno.</div>`}
-      <button class="fab" id="addHabit" aria-label="Añadir hábito">+</button>`;
+      <div class="section-head"><div class="kicker">Hábitos ${year}</div><h2>Consolidar hábitos</h2><p>${desc}</p></div>
+      <div class="seg">${HABIT_COLS.map((c) => `<button data-f="${c.key}" class="${c.key === habitFilter ? 'active' : ''}">${c.label}<span class="cnt">${y.habitos.filter((h) => h.status === c.key).length}</span></button>`).join('')}</div>
+      ${canImport ? `<div class="card"><p style="margin:0 0 12px">Este año aún no tiene hábitos.</p><button class="btn primary sm" id="importHabits">Traer hábitos de ${year - 1}</button></div>` : ''}
+      ${list.length ? list.map(habitCard).join('') : `<div class="empty-card">No hay hábitos en esta columna.</div>`}
+      ${fab('addHabit', 'Hábito')}`;
   }
   function habitCard(h) {
     const d = habitDays(h);
@@ -451,15 +494,15 @@
     if (h.status === 'proceso') {
       right = `<div class="streak"><div class="n">${d}</div><div class="l">días seguidos</div></div>`;
       body = `<div class="progress streak-bar"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div>
-        ${d >= HABIT_GOAL ? `<div class="hint">¡${d} días seguidos! Ya puedes pasarlo a conseguidos.</div>` : ''}`;
-      actions = `<button class="btn sm danger" data-act="reset" data-id="${h.id}">He fallado · reiniciar</button>
-        ${d >= HABIT_GOAL ? `<button class="btn sm primary" data-act="win" data-id="${h.id}">✓ Conseguido</button>` : ''}`;
+        ${d >= HABIT_GOAL ? `<div class="hint">${d} días seguidos: ya puedes darlo por conseguido.</div>` : ''}`;
+      actions = `<button class="btn sm danger" data-act="reset" data-id="${h.id}">He fallado, reiniciar</button>
+        ${d >= HABIT_GOAL ? `<button class="btn sm primary" data-act="win" data-id="${h.id}">Marcar conseguido</button>` : ''}`;
     } else if (h.status === 'banquillo') {
       actions = `<button class="btn sm primary" data-act="start" data-id="${h.id}">Empezar hoy</button>`;
     } else {
       right = `<div class="streak"><div class="n" style="color:var(--green)">${d}</div><div class="l">días</div></div>`;
       body = h.wonDate ? `<div class="habit-sub" style="color:var(--green)">Conseguido el ${fmtDate(h.wonDate)}</div>` : '';
-      actions = `<button class="btn sm ghost" data-act="relapse" data-id="${h.id}">Lo he perdido · volver a proceso</button>`;
+      actions = `<button class="btn sm ghost" data-act="relapse" data-id="${h.id}">Lo he perdido</button>`;
     }
     return `<div class="habit ${h.status}">
       <div class="habit-top"><div><div class="habit-name">${esc(h.name)}</div>${sub ? `<div class="habit-sub">${sub}</div>` : ''}
@@ -483,16 +526,16 @@
       if (!h) return;
       const act = b.dataset.act;
       if (act === 'edit') return habitSheet(h);
-      if (act === 'start') { h.status = 'proceso'; h.streakStart = todayISO(); habitFilter = 'proceso'; toast('¡A por ello! Día 1'); }
+      if (act === 'start') { h.status = 'proceso'; h.streakStart = todayISO(); habitFilter = 'proceso'; toast('Día 1. A por ello'); }
       if (act === 'reset') {
         const d = habitDays(h);
         if (!confirm(`¿Reiniciar la racha de "${h.name}"? Llevabas ${d} días.`)) return;
         h.best = Math.max(h.best || 0, d - 1);
         h.attempts = (h.attempts || 0) + 1;
         h.streakStart = todayISO();
-        toast('Racha reiniciada. Mañana, día 2 💪');
+        toast('Racha reiniciada');
       }
-      if (act === 'win') { h.best = Math.max(h.best || 0, habitDays(h)); h.status = 'conseguido'; h.wonDate = todayISO(); habitFilter = 'conseguido'; toast('¡Hábito consolidado! 🏆'); }
+      if (act === 'win') { h.best = Math.max(h.best || 0, habitDays(h)); h.status = 'conseguido'; h.wonDate = todayISO(); habitFilter = 'conseguido'; toast('Hábito consolidado'); }
       if (act === 'relapse') { h.status = 'proceso'; h.best = Math.max(h.best || 0, habitDays(h)); h.attempts = (h.attempts || 0) + 1; h.streakStart = todayISO(); h.wonDate = ''; habitFilter = 'proceso'; }
       commit();
     }));
@@ -509,9 +552,9 @@
           <label>Mes objetivo<select name="month"><option value="">—</option>${MONTHS_FULL.map((m, i) => `<option value="${i}" ${String(i) === String(d.month) ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
           <label>Racha desde<input type="date" name="streakStart" value="${esc(d.streakStart || '')}" /></label>
         </div>
-        <label>Notas<textarea name="notes" placeholder="Por qué, cómo, cuándo…">${esc(d.notes || '')}</textarea></label>
+        <label>Notas<textarea name="notes" placeholder="Por qué, cómo, cuándo">${esc(d.notes || '')}</textarea></label>
         <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Borrar</button>'}
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
@@ -528,7 +571,7 @@
       });
       const del = $('#del', el);
       if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Borrar este hábito?')) return;
+        if (!confirm('¿Eliminar este hábito?')) return;
         const y = Y(); y.habitos = y.habitos.filter((x) => x.id !== h.id);
         closeSheet(); commit();
       });
@@ -545,23 +588,23 @@
     const groups = {};
     trips.forEach((t) => { const k = monthOf(t.inicio); (groups[k] = groups[k] || []).push(t); });
     return `
-      <div class="section-head"><div><div class="kicker">Viajes ${year}</div><h2>El mundo, mes a mes</h2></div></div>
+      <div class="section-head"><div class="kicker">Viajes ${year}</div><h2>Viajes por mes</h2></div>
       <div class="card">
         <div class="stats">
-          <div class="stat gold"><div class="n">${yearTrips.length}</div><div class="l">Viajes</div></div>
+          <div class="stat sky"><div class="n">${yearTrips.length}</div><div class="l">Viajes</div></div>
           <div class="stat"><div class="n">${days}</div><div class="l">Días fuera</div></div>
-          <div class="stat green"><div class="n">${counts.filter(Boolean).length}</div><div class="l">Meses con viaje</div></div>
+          <div class="stat green"><div class="n">${counts.filter(Boolean).length}<span style="font-size:14px;color:var(--muted)">/12</span></div><div class="l">Meses con viaje</div></div>
         </div>
-        <div style="margin-top:16px">${monthBars(counts, 'blue')}</div>
+        <div style="margin-top:18px">${monthBars(counts, 'sky')}</div>
       </div>
       ${trips.length ? Object.keys(groups).sort((a, b) => b - a).map((m) => `
-        <div class="card"><div class="kicker" style="margin-bottom:10px">${MONTHS_FULL[m]} · ${groups[m].length} viaje${groups[m].length > 1 ? 's' : ''}</div>
+        <div class="card"><div class="sub-title">${MONTHS_FULL[m]} · ${groups[m].length} viaje${groups[m].length > 1 ? 's' : ''}</div>
           ${groups[m].map((t) => `<div class="item" data-id="${t.id}">${dateBox(t.inicio)}<div class="body">
             <div class="title">${esc(t.destino)}</div>
-            <div class="desc">${fmtDate(t.inicio)}${t.fin && t.fin !== t.inicio ? ` → ${fmtDate(t.fin)} · ${daysBetween(t.inicio, t.fin) + 1} días` : ''}${t.con ? ` · con ${esc(t.con)}` : ''}</div>
+            <div class="desc">${fmtDate(t.inicio)}${t.fin && t.fin !== t.inicio ? ` – ${fmtDate(t.fin)} · ${daysBetween(t.inicio, t.fin) + 1} días` : ''}${t.con ? ` · con ${esc(t.con)}` : ''}</div>
             ${t.notas ? `<div class="desc">${esc(t.notas)}</div>` : ''}</div></div>`).join('')}
-        </div>`).join('') : '<div class="empty">Aún no hay viajes en este año. Pulsa + para añadir el primero.</div>'}
-      <button class="fab" id="addTrip" aria-label="Añadir viaje">+</button>`;
+        </div>`).join('') : '<div class="empty-card">Aún no hay viajes registrados este año.</div>'}
+      ${fab('addTrip', 'Viaje')}`;
   }
   function bindViajes(v) {
     const y = Y();
@@ -584,9 +627,9 @@
           <label>Vuelta<input type="date" name="fin" value="${esc(d.fin)}" /></label>
         </div>
         <label>Con quién<input name="con" value="${esc(d.con)}" placeholder="Opcional" /></label>
-        <label>Notas<textarea name="notas" placeholder="Lo mejor del viaje…">${esc(d.notas)}</textarea></label>
+        <label>Notas<textarea name="notas" placeholder="Lo mejor del viaje">${esc(d.notas)}</textarea></label>
         <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Borrar</button>'}
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
@@ -595,19 +638,18 @@
         const f = e.target;
         const vals = { destino: f.destino.value.trim(), inicio: f.inicio.value, fin: f.fin.value, con: f.con.value.trim(), notas: f.notas.value.trim() };
         if (!vals.destino || !vals.inicio) return;
-        if (vals.fin && vals.fin < vals.inicio) { toast('La vuelta no puede ser antes de la ida'); return; }
-        const target = yearOf(vals.inicio);
+        if (vals.fin && vals.fin < vals.inicio) { toast('La vuelta no puede ser anterior a la ida'); return; }
         if (isNew) {
-          if (target !== year) { year = target; }
+          if (yearOf(vals.inicio) !== year) year = yearOf(vals.inicio);
           Y().viajes.push({ id: uid(), ...vals });
         } else {
           Object.assign(t, vals);
         }
-        closeSheet(); commit(); toast(isNew ? 'Viaje guardado ✈' : 'Viaje actualizado');
+        closeSheet(); commit(); toast(isNew ? 'Viaje guardado' : 'Viaje actualizado');
       });
       const del = $('#del', el);
       if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Borrar este viaje?')) return;
+        if (!confirm('¿Eliminar este viaje?')) return;
         const y = Y(); y.viajes = y.viajes.filter((x) => x.id !== t.id);
         closeSheet(); commit();
       });
@@ -621,25 +663,25 @@
     const last = (tipo) => y.oscuridad.filter((x) => x.tipo === tipo).sort(byDateDesc('fecha'))[0];
     const counts = countByMonth(y.oscuridad, 'fecha');
     return `
-      <div class="section-head"><div><div class="kicker">Oscuridad ${year}</div><h2>Ser consciente</h2>
-        <p>Registra sin juzgarte. Ver el patrón es el primer paso.</p></div></div>
+      <div class="section-head"><div class="kicker">Oscuridad ${year}</div><h2>Lo que quiero reducir</h2>
+        <p>Registrar sin juzgar. Ver el patrón es el primer paso.</p></div>
       <div class="dark-grid">
         ${DARK.map((d) => {
           const l = last(d.key);
           const since = l ? daysBetween(l.fecha, todayISO()) : null;
           return `<button class="dark-btn" data-add="${d.key}">
-            <div class="e">${d.icon}</div><div class="n">${list.filter((x) => x.tipo === d.key).length}</div>
+            ${badge(d.icon, 'night')}<div class="n">${list.filter((x) => x.tipo === d.key).length}</div>
             <div class="l">${d.label}</div>
-            <div class="s">${since == null ? 'Sin registros' : since < 0 ? '' : since === 0 ? 'Hoy' : `${since} días sin`}</div>
-            <span class="plus">+ Registrar</span></button>`;
+            <div class="s">${since == null ? 'Sin registros' : since < 0 ? '—' : since === 0 ? 'Hoy' : `${since} días sin`}</div>
+            <span class="plus">${ic('plus')}Registrar</span></button>`;
         }).join('')}
       </div>
-      <div class="card"><div class="card-title"><h3>Por meses</h3><span class="muted">${list.length} en total</span></div>${monthBars(counts, 'night')}</div>
-      <div class="card"><div class="card-title"><h3>Calendario</h3></div>${heatmap(yearList(y.oscuridad, 'fecha'), 'fecha', 'l')}</div>
+      <div class="card"><div class="card-title"><h3>${badge('chart')}Por meses</h3><span class="meta">${list.length} en total</span></div>${monthBars(counts, 'night')}</div>
+      <div class="card"><div class="card-title"><h3>${badge('calendar')}Calendario</h3></div>${heatmap(yearList(y.oscuridad, 'fecha'), 'fecha', 'l')}</div>
       <div class="card"><div class="card-title"><h3>Registro</h3></div>
         ${list.length ? list.map((x) => {
           const d = DARK.find((k) => k.key === x.tipo) || DARK[0];
-          return `<div class="item" data-id="${x.id}">${dateBox(x.fecha)}<div class="body"><div class="title">${d.icon} ${d.one}</div>
+          return `<div class="item" data-id="${x.id}">${dateBox(x.fecha)}<div class="body"><div class="title">${ic(d.icon)}${d.one}</div>
             <div class="desc">${WEEKDAYS[parseISO(x.fecha).getDay()]}${x.nota ? ' · ' + esc(x.nota) : ''}</div></div></div>`;
         }).join('') : '<div class="empty">Nada registrado este año.</div>'}
       </div>`;
@@ -653,13 +695,13 @@
     const isNew = !x;
     const d = x || { tipo, fecha: defaultDate(), nota: '' };
     openSheet(`
-      <h3>${isNew ? 'Registrar' : 'Editar registro'}</h3>
+      <h3>${isNew ? 'Nuevo registro' : 'Editar registro'}</h3>
       <form id="df">
-        <div class="chips">${DARK.map((k) => `<button type="button" class="chip ${k.key === d.tipo ? 'on' : ''}" data-tipo="${k.key}">${k.icon} ${k.one}</button>`).join('')}</div>
+        <div class="chips">${DARK.map((k) => `<button type="button" class="chip ${k.key === d.tipo ? 'on' : ''}" data-tipo="${k.key}">${ic(k.icon)}${k.one}</button>`).join('')}</div>
         <label>Fecha<input type="date" name="fecha" required value="${esc(d.fecha)}" /></label>
-        <label>¿Qué pasó? (opcional)<textarea name="nota" placeholder="Contexto, con quién, cómo te sentiste…">${esc(d.nota)}</textarea></label>
+        <label>Contexto (opcional)<textarea name="nota" placeholder="Qué pasó, con quién, cómo te sentiste">${esc(d.nota)}</textarea></label>
         <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Borrar</button>'}
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
@@ -672,11 +714,11 @@
         if (!vals.fecha) return;
         if (isNew) { if (yearOf(vals.fecha) !== year) year = yearOf(vals.fecha); Y().oscuridad.push({ id: uid(), ...vals }); }
         else Object.assign(x, vals);
-        closeSheet(); commit(); toast('Registrado');
+        closeSheet(); commit(); toast('Registro guardado');
       });
       const del = $('#del', el);
       if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Borrar este registro?')) return;
+        if (!confirm('¿Eliminar este registro?')) return;
         const y = Y(); y.oscuridad = y.oscuridad.filter((z) => z.id !== x.id);
         closeSheet(); commit();
       });
@@ -684,16 +726,16 @@
   }
 
   // ----- Luz -----
+  const dots = (n) => `<span class="dots">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
   function viewLuz() {
     const y = Y();
     const fel = yearList(y.felicidad, 'fecha').sort(byDateDesc('fecha'));
     const dar = yearList(y.dar, 'fecha').sort(byDateDesc('fecha'));
     const seg = `<div class="seg" style="grid-template-columns:1fr 1fr">
-      <button data-f="felicidad" class="${luzFilter === 'felicidad' ? 'active' : ''}">Felicidad <span class="cnt">${fel.length}</span></button>
-      <button data-f="dar" class="${luzFilter === 'dar' ? 'active' : ''}">Dar sin esperar <span class="cnt">${dar.length}</span></button></div>`;
+      <button data-f="felicidad" class="${luzFilter === 'felicidad' ? 'active' : ''}">Felicidad<span class="cnt">${fel.length}</span></button>
+      <button data-f="dar" class="${luzFilter === 'dar' ? 'active' : ''}">Dar sin esperar nada<span class="cnt">${dar.length}</span></button></div>`;
 
     if (luzFilter === 'felicidad') {
-      // Patrones
       const tagCount = {};
       fel.forEach((m) => (m.tags || []).forEach((t) => { tagCount[t] = (tagCount[t] || 0) + 1; }));
       const tagsSorted = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
@@ -702,33 +744,32 @@
       const bestWd = Math.max(...wd);
       const wdLabel = bestWd ? WEEKDAYS[wd.indexOf(bestWd)] : null;
       return `
-        <div class="section-head"><div><div class="kicker">Luz ${year}</div><h2>Lo que te enciende</h2>
-          <p>Momentos en los que vibras. Encuentra el patrón.</p></div></div>
+        <div class="section-head"><div class="kicker">Luz ${year}</div><h2>Lo que me da luz</h2>
+          <p>Momentos en los que vibras, para encontrar patrones.</p></div>
         ${seg}
-        <div class="card"><div class="card-title"><h3>Patrones</h3></div>
-          ${tagsSorted.length ? `<div class="bars-h">${tagsSorted.map(([t, n]) => `<div class="row"><span class="lbl">${esc(t)}</span><span class="track"><i style="width:${(n / maxT) * 100}%"></i></span><span class="val">${n}</span></div>`).join('')}</div>` : '<div class="empty">Añade etiquetas a tus momentos para ver qué se repite.</div>'}
-          ${wdLabel ? `<p class="muted" style="font-size:13px;margin:12px 0 0">Tu día más feliz suele ser el <b style="color:var(--gold)">${wdLabel}</b>.</p>` : ''}
-          <div style="margin-top:16px">${monthBars(countByMonth(y.felicidad, 'fecha'))}</div>
+        <div class="card"><div class="card-title"><h3>${badge('chart', 'gold')}Patrones</h3></div>
+          ${tagsSorted.length ? `<div class="bars-h">${tagsSorted.map(([t, n]) => `<div class="row"><span class="lbl">${esc(t)}</span><span class="track"><i style="width:${(n / maxT) * 100}%"></i></span><span class="val">${n}</span></div>`).join('')}</div>` : '<div class="empty">Etiqueta tus momentos para ver qué se repite.</div>'}
+          <div style="margin-top:16px">${monthBars(countByMonth(y.felicidad, 'fecha'), 'gold')}</div>
+          ${wdLabel ? `<p class="insight">El día de la semana con más momentos felices es el <b>${wdLabel}</b>.</p>` : ''}
         </div>
         <div class="card"><div class="card-title"><h3>Momentos</h3></div>
           ${fel.length ? fel.map((m) => `<div class="item" data-id="${m.id}" data-kind="felicidad">${dateBox(m.fecha)}<div class="body">
-            <div class="title">${'☀'.repeat(m.intensidad || 0)}</div>
-            <div class="desc" style="color:var(--text)">${esc(m.texto)}</div>
-            ${m.tags && m.tags.length ? `<div class="tags">${m.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}</div></div>`).join('') : '<div class="empty">Aún no hay momentos. ¿Cuándo vibraste por última vez?</div>'}
+            <div class="desc main">${esc(m.texto)}</div>
+            <div class="tags" style="align-items:center">${dots(m.intensidad || 0)}${(m.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></div>`).join('') : '<div class="empty">Aún no hay momentos registrados.</div>'}
         </div>
-        <button class="fab" id="addLuz" aria-label="Añadir">+</button>`;
+        ${fab('addLuz', 'Momento')}`;
     }
     return `
-      <div class="section-head"><div><div class="kicker">Luz ${year}</div><h2>Dar sin esperar nada</h2>
-        <p>Lo que haces por los demás, sin lucro.</p></div></div>
+      <div class="section-head"><div class="kicker">Luz ${year}</div><h2>Dar sin esperar nada</h2>
+        <p>Lo que haces por los demás, sin ningún tipo de lucro.</p></div>
       ${seg}
-      <div class="card"><div class="card-title"><h3>Por meses</h3><span class="muted">${dar.length} este año</span></div>${monthBars(countByMonth(y.dar, 'fecha'), 'green')}</div>
+      <div class="card"><div class="card-title"><h3>${badge('dar', 'green')}Por meses</h3><span class="meta">${dar.length} este año</span></div>${monthBars(countByMonth(y.dar, 'fecha'), 'green')}</div>
       <div class="card"><div class="card-title"><h3>Registro</h3></div>
         ${dar.length ? dar.map((m) => `<div class="item" data-id="${m.id}" data-kind="dar">${dateBox(m.fecha)}<div class="body">
-          <div class="desc" style="color:var(--text)">${esc(m.texto)}</div>
-          ${m.para ? `<div class="tags"><span class="tag green">para ${esc(m.para)}</span></div>` : ''}</div></div>`).join('') : '<div class="empty">Nada registrado todavía.</div>'}
+          <div class="desc main">${esc(m.texto)}</div>
+          ${m.para ? `<div class="tags"><span class="tag green">Para ${esc(m.para)}</span></div>` : ''}</div></div>`).join('') : '<div class="empty">Nada registrado todavía.</div>'}
       </div>
-      <button class="fab" id="addLuz" aria-label="Añadir">+</button>`;
+      ${fab('addLuz', 'Registro')}`;
   }
   function bindLuz(v) {
     const y = Y();
@@ -751,18 +792,18 @@
     const chipsHtml = () => allTags().concat(tags.filter((t) => !allTags().includes(t)))
       .map((t) => `<button type="button" class="chip ${tags.includes(t) ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
     openSheet(`
-      <h3>${isNew ? 'Momento feliz' : 'Editar momento'}</h3>
+      <h3>${isNew ? 'Momento de felicidad' : 'Editar momento'}</h3>
       <form id="mf">
-        <label>¿Qué pasó?<textarea name="texto" required placeholder="Dónde estabas, con quién, qué sentiste…">${esc(d.texto)}</textarea></label>
+        <label>¿Qué pasó?<textarea name="texto" required placeholder="Dónde estabas, con quién, qué sentiste">${esc(d.texto)}</textarea></label>
         <div class="row2">
           <label>Fecha<input type="date" name="fecha" required value="${esc(d.fecha)}" /></label>
-          <label>Intensidad<select name="intensidad">${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${n === Number(d.intensidad) ? 'selected' : ''}>${'☀'.repeat(n)}</option>`).join('')}</select></label>
+          <label>Intensidad<select name="intensidad">${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${n === Number(d.intensidad) ? 'selected' : ''}>${n} de 5</option>`).join('')}</select></label>
         </div>
-        <div class="kicker">Etiquetas</div>
+        <div class="field-label">Etiquetas</div>
         <div class="chips" id="chips">${chipsHtml()}</div>
-        <label>Nueva etiqueta<input id="newTag" placeholder="Escribe y pulsa Enter" enterkeyhint="done" /></label>
+        <label>Nueva etiqueta<input id="newTag" placeholder="Escribe y pulsa Intro" enterkeyhint="done" /></label>
         <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Borrar</button>'}
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
@@ -791,11 +832,11 @@
         if (!vals.texto || !vals.fecha) return;
         if (isNew) { if (yearOf(vals.fecha) !== year) year = yearOf(vals.fecha); Y().felicidad.push({ id: uid(), ...vals }); }
         else Object.assign(m, vals);
-        closeSheet(); commit(); toast('Momento guardado ☀');
+        closeSheet(); commit(); toast('Momento guardado');
       });
       const del = $('#del', el);
       if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Borrar este momento?')) return;
+        if (!confirm('¿Eliminar este momento?')) return;
         const y = Y(); y.felicidad = y.felicidad.filter((z) => z.id !== m.id);
         closeSheet(); commit();
       });
@@ -805,7 +846,7 @@
     const isNew = !m;
     const d = m || { fecha: defaultDate(), texto: '', para: '' };
     openSheet(`
-      <h3>${isNew ? 'Dar sin esperar nada' : 'Editar'}</h3>
+      <h3>${isNew ? 'Dar sin esperar nada' : 'Editar registro'}</h3>
       <form id="gf">
         <label>¿Qué hiciste?<textarea name="texto" required placeholder="Ej. Ayudé a mi vecino con la mudanza">${esc(d.texto)}</textarea></label>
         <div class="row2">
@@ -813,7 +854,7 @@
           <label>Para quién<input name="para" value="${esc(d.para)}" placeholder="Opcional" /></label>
         </div>
         <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Borrar</button>'}
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
@@ -824,11 +865,11 @@
         if (!vals.texto || !vals.fecha) return;
         if (isNew) { if (yearOf(vals.fecha) !== year) year = yearOf(vals.fecha); Y().dar.push({ id: uid(), ...vals }); }
         else Object.assign(m, vals);
-        closeSheet(); commit(); toast('Guardado 💚');
+        closeSheet(); commit(); toast('Registro guardado');
       });
       const del = $('#del', el);
       if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Borrar este registro?')) return;
+        if (!confirm('¿Eliminar este registro?')) return;
         const y = Y(); y.dar = y.dar.filter((z) => z.id !== m.id);
         closeSheet(); commit();
       });

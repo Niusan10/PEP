@@ -6,24 +6,39 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
   <meta name="googlebot" content="noindex, nofollow" />
   <meta name="referrer" content="no-referrer" />
-  <meta name="theme-color" content="#14110f" />
+  <meta name="theme-color" content="#0e1014" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="P.E.P" />
-  <title>P.E.P</title>
+  <meta name="apple-mobile-web-app-title" content="PEP" />
+  <title>PEP · Plan Estratégico Personal</title>
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="/icon-192.png" />
+  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="11" fill="url(#lg)" />
+      <path d="M11.5 25.5 20 17l8.5 8.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="20" cy="10.5" r="2.4" fill="#fff" />
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6f8cff" /><stop offset="1" stop-color="#3e5be0" /></linearGradient></defs>
+    </symbol>
+  </svg>
+
   <!-- LOGIN -->
   <section id="login" class="login hidden">
     <div class="login-card">
-      <div class="brand-mark">P·E·P</div>
-      <h1>Plan Estratégico Personal</h1>
-      <p class="muted">Tu año, a la vista.</p>
+      <div class="lockup lg">
+        <svg class="logo"><use href="#logo" /></svg>
+        <div><div class="wordmark">PEP</div><div class="tagline">Plan Estratégico Personal</div></div>
+      </div>
+      <h1>Bienvenido, Pablo</h1>
+      <p class="muted">Accede a tu plan del año.</p>
       <form id="loginForm" autocomplete="on">
         <label>Email
           <input type="email" name="email" autocomplete="username" required inputmode="email" />
@@ -34,41 +49,38 @@
         <button class="btn primary block" type="submit">Entrar</button>
         <p id="loginError" class="error"></p>
       </form>
+      <p class="fineprint">Acceso privado</p>
     </div>
   </section>
 
   <!-- APP -->
   <div id="app" class="hidden">
     <header class="topbar">
-      <div class="brand-mark small">P·E·P</div>
+      <div class="lockup">
+        <svg class="logo"><use href="#logo" /></svg>
+        <div class="wordmark">PEP</div>
+      </div>
       <div class="year-switch">
-        <button class="icon-btn" id="yearPrev" aria-label="Año anterior">‹</button>
+        <button class="icon-btn" id="yearPrev" aria-label="Año anterior"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg></button>
         <span id="yearLabel">2026</span>
-        <button class="icon-btn" id="yearNext" aria-label="Año siguiente">›</button>
+        <button class="icon-btn" id="yearNext" aria-label="Año siguiente"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg></button>
       </div>
       <div class="top-actions">
         <span id="saveState" class="save-state" title="Estado de guardado"></span>
-        <button class="icon-btn" id="menuBtn" aria-label="Menú">⋯</button>
+        <button class="icon-btn" id="menuBtn" aria-label="Menú"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" /></svg></button>
       </div>
     </header>
 
     <div id="menu" class="menu hidden">
-      <button data-action="export">Descargar copia (JSON)</button>
-      <button data-action="import">Importar copia</button>
+      <button data-action="export">Descargar copia de seguridad</button>
+      <button data-action="import">Restaurar copia</button>
       <button data-action="logout" class="danger-text">Cerrar sesión</button>
       <input type="file" id="importFile" accept="application/json" hidden />
     </div>
 
     <main id="view" class="view"></main>
 
-    <nav class="tabbar" id="tabbar">
-      <button data-tab="resumen" class="active"><span class="ti">◎</span><span>Resumen</span></button>
-      <button data-tab="objetivos"><span class="ti">◆</span><span>Objetivos</span></button>
-      <button data-tab="habitos"><span class="ti">↻</span><span>Hábitos</span></button>
-      <button data-tab="viajes"><span class="ti">✈</span><span>Viajes</span></button>
-      <button data-tab="oscuridad"><span class="ti">☾</span><span>Oscuridad</span></button>
-      <button data-tab="luz"><span class="ti">☀</span><span>Luz</span></button>
-    </nav>
+    <nav class="tabbar" id="tabbar"></nav>
   </div>
 
   <!-- SHEET / MODAL -->
