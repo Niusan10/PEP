@@ -416,3 +416,6 @@ body.side-open .side-backdrop { opacity: 1; pointer-events: auto; }
   .ktile { padding: 11px 12px; }
   .kname { font-size: 14px; }
 }
+.kage { display: flex; align-items: flex-start; gap: 4px; font-size: 10.5px; color: var(--muted); margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); line-height: 1.3; }
+.kage .ico { width: 11px; height: 11px; stroke-width: 2; margin-top: 1px; }
+.kage b { color: var(--text-2); font-weight: 500; }

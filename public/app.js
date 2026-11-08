@@ -699,6 +699,13 @@
       <div class="kanban">${cols}</div>
       ${fab('addHabit', 'Hábito')}`;
   }
+  const habitCreated = (h) => h.createdAt || `${year}-01-01`;
+  function habitAge(h) {
+    const c = habitCreated(h);
+    const n = Math.max(0, daysBetween(c, todayISO()) + 1);
+    const { day, mon } = fmtShort(c);
+    return `<div class="kage" title="Días desde que se creó el hábito">${ic('calendar')}<span><b>${n}</b> ${n === 1 ? 'día' : 'días'} · desde ${day} ${mon.toLowerCase()}</span></div>`;
+  }
   function habitTile(h) {
     const d = habitDays(h);
     let meta = '';
@@ -712,7 +719,7 @@
     } else if (h.month !== '' && h.month != null) {
       meta = `<div class="kmeta muted">${MONTHS_FULL[h.month]}</div>`;
     }
-    return `<button class="ktile" data-habit="${h.id}"><div class="kname">${esc(h.name)}</div>${meta}</button>`;
+    return `<button class="ktile" data-habit="${h.id}"><div class="kname">${esc(h.name)}</div>${meta}${habitAge(h)}</button>`;
   }
   function habitAction(h, act) {
     if (act === 'start') { h.status = 'proceso'; h.streakStart = todayISO(); toast('Día 1. A por ello'); }
@@ -747,7 +754,8 @@
     let actions = '', info = '';
     if (!isNew) {
       const dd = habitDays(h);
-      const extra = [h.best ? `Mejor racha: ${h.best} días` : '', h.attempts ? `${h.attempts} reinicio${h.attempts > 1 ? 's' : ''}` : '', h.wonDate ? `Conseguido el ${fmtDate(h.wonDate)}` : ''].filter(Boolean).join(' · ');
+      const age = Math.max(0, daysBetween(habitCreated(h), todayISO()) + 1);
+      const extra = [`${age} días desde que lo creaste`, h.best ? `Mejor racha: ${h.best} días` : '', h.attempts ? `${h.attempts} reinicio${h.attempts > 1 ? 's' : ''}` : '', h.wonDate ? `Conseguido el ${fmtDate(h.wonDate)}` : ''].filter(Boolean).join(' · ');
       if (h.status === 'proceso' && h.streakStart) {
         info = `<div class="hs-streak"><b>${dd}</b><span>días seguidos de ${HABIT_GOAL}</span></div><div class="progress" style="margin-bottom:6px"><i style="width:${Math.min(100, (dd / HABIT_GOAL) * 100)}%"></i></div>`;
         actions = `<button type="button" class="btn sm danger" data-hact="reset">He fallado, reiniciar</button>
@@ -772,6 +780,7 @@
           <label>Mes objetivo<select name="month"><option value="">—</option>${MONTHS_FULL.map((m, i) => `<option value="${i}" ${String(i) === String(d.month) ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
           <label>Racha desde<input type="date" name="streakStart" value="${esc(d.streakStart || '')}" /></label>
         </div>
+        <label>Creado el<input type="date" name="createdAt" value="${esc(isNew ? todayISO() : habitCreated(d))}" /></label>
         <label>Notas<textarea name="notes" placeholder="Por qué, cómo, cuándo">${esc(d.notes || '')}</textarea></label>
         <div class="sheet-actions">
           ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
@@ -784,7 +793,7 @@
       $('#hf', el).addEventListener('submit', (e) => {
         e.preventDefault();
         const f = e.target;
-        const vals = { name: f.name.value.trim(), status: f.status.value, month: f.month.value === '' ? '' : Number(f.month.value), streakStart: f.streakStart.value, notes: f.notes.value.trim() };
+        const vals = { createdAt: f.createdAt.value || todayISO(), name: f.name.value.trim(), status: f.status.value, month: f.month.value === '' ? '' : Number(f.month.value), streakStart: f.streakStart.value, notes: f.notes.value.trim() };
         if (!vals.name) return;
         if (vals.status === 'proceso' && !vals.streakStart && (isNew || h.status !== 'proceso')) vals.streakStart = todayISO();
         if (isNew) Y().habitos.push({ id: uid(), attempts: 0, best: 0, ...vals });
