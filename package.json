@@ -1,0 +1,13 @@
+{
+  "name": "pep-plan-estrategico",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "P.E.P - Plan Estratégico Personal",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0"
+  }
+}
