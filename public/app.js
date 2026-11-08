@@ -18,7 +18,7 @@
   const fmtShort = (s) => { const d = parseISO(s); return { day: d.getDate(), mon: MONTHS[d.getMonth()] }; };
   const monthOf = (s) => parseISO(s).getMonth();
   const yearOf = (s) => Number(String(s).slice(0, 4));
-  const byDateDesc = (k) => (a, b) => String(b[k]).localeCompare(String(a[k]));
+  const byDateDesc = (k) => (a, b) => String(b[k]).localeCompare(String(a[k])) || ((b.orden || 0) - (a.orden || 0));
 
   // Iconos de línea (24x24, trazo)
   const ICONS = {
@@ -80,7 +80,7 @@
   function emptyYear() {
     const objetivos = {};
     AREAS.forEach((a) => { objetivos[a.key] = [{ text: '', done: false, date: '' }, { text: '', done: false, date: '' }]; });
-    return { objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [] };
+    return { lema: '', reto: { text: '', detalle: '', done: false }, objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
   }
   function Y() {
     if (!state.years[year]) state.years[year] = emptyYear();
@@ -316,8 +316,9 @@
     }
     return `<div class="heat">${cols}</div><div class="heat-labels">${MONTHS.map((m) => `<span>${m.slice(0, 1)}</span>`).join('')}</div>`;
   }
-  function dateBox(s) {
+  function dateBox(s, soloMes) {
     const { day, mon } = fmtShort(s);
+    if (soloMes) return `<div class="date"><b style="font-size:13px;padding-top:3px">${mon}</b><small>mes</small></div>`;
     return `<div class="date"><b>${day}</b><small>${mon}</small></div>`;
   }
   function yearList(list, key) {
@@ -364,10 +365,17 @@
       const d = daysBetween(l[0].fecha, todayISO());
       return d < 0 ? '' : d === 0 ? 'hoy' : `${d} días sin`;
     };
-    const proc = y.habitos.filter((h) => h.status === 'proceso');
+    const proc = y.habitos.filter((h) => h.status === 'proceso' && h.streakStart);
 
     return `
-      <div class="section-head"><div class="kicker">Plan ${year}</div><h2>Resumen del año</h2></div>
+      <div class="section-head"><div class="kicker">Plan ${year}</div><h2>${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
+        ${y.lema ? '' : '<p>Ponle un lema a tu año tocando la tarjeta de abajo.</p>'}</div>
+      <div class="card link" id="mottoCard">
+        <div class="card-title" style="margin-bottom:8px"><h3>${badge('objetivos', 'accent')}Reto profesional</h3>
+          ${y.reto.text ? `<span class="tag ${y.reto.done ? 'green' : ''}" style="${y.reto.done ? '' : 'background:var(--accent-soft);color:var(--accent)'}">${y.reto.done ? 'Conseguido' : 'En marcha'}</span>` : ''}</div>
+        ${y.reto.text ? `<div style="font-weight:500;font-size:16px">${esc(y.reto.text)}</div>${y.reto.detalle ? `<div class="muted" style="font-size:13.5px;margin-top:4px">${esc(y.reto.detalle)}</div>` : ''}`
+          : '<div class="empty">Toca para definir el lema y el reto profesional del año.</div>'}
+      </div>
       <div class="card"><div class="hero">${ring(pct)}
         <div><div class="t">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
         <div class="s">${isCurrent ? `Quedan ${Math.ceil((end - now) / 86400000)} días del año` : ''}</div>
@@ -414,12 +422,34 @@
       </div>`;
   }
   function bindResumen(v) {
+    $('#mottoCard', v).addEventListener('click', () => mottoSheet());
     $$('[data-go]', v).forEach((c) => c.addEventListener('click', () => {
       tab = c.dataset.go;
       $$('#tabbar button').forEach((x) => x.classList.toggle('active', x.dataset.tab === tab));
       window.scrollTo(0, 0);
       render();
     }));
+  }
+
+  function mottoSheet() {
+    const y = Y();
+    openSheet(`
+      <h3>Lema y reto ${year}</h3>
+      <form id="lf">
+        <label>Lema del año<input name="lema" value="${esc(y.lema)}" placeholder="Ej. Elegere & Love" /></label>
+        <label>Reto profesional<input name="text" value="${esc(y.reto.text)}" placeholder="Ej. Ser libre" /></label>
+        <label>Descripción<textarea name="detalle" placeholder="Qué significa para ti">${esc(y.reto.detalle)}</textarea></label>
+        <label class="inline-check"><input type="checkbox" name="done" ${y.reto.done ? 'checked' : ''} /> Reto conseguido</label>
+        <div class="sheet-actions"><button type="submit" class="btn primary">Guardar</button></div>
+      </form>`, (el) => {
+      $('#lf', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = e.target;
+        y.lema = f.lema.value.trim();
+        y.reto = { text: f.text.value.trim(), detalle: f.detalle.value.trim(), done: f.done.checked };
+        closeSheet(); commit();
+      });
+    });
   }
 
   // ----- Objetivos -----
@@ -436,18 +466,99 @@
             <div class="goal ${g.done ? 'done' : ''}">
               <button class="check ${g.done ? 'on' : ''}" data-area="${a.key}" data-i="${i}" aria-label="Marcar conseguido">${ic('check', '')}</button>
               <div class="goal-body">
-                <input class="goal-text" data-area="${a.key}" data-i="${i}" value="${esc(g.text)}" placeholder="Escribe el objetivo ${i + 1}" />
+                <textarea class="goal-text" rows="1" data-area="${a.key}" data-i="${i}" placeholder="Escribe el objetivo ${i + 1}">${esc(g.text)}</textarea>
                 ${g.done ? `<div class="goal-meta">Conseguido el <input type="date" data-date-area="${a.key}" data-i="${i}" value="${esc(g.date)}" /></div>` : ''}
               </div>
             </div>`).join('')}
-        </div>`).join('')}`;
+        </div>`).join('')}
+      ${pesoCard(y)}`;
+  }
+  function isoWeek(s) {
+    const d = parseISO(s); d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const w1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - w1) / 86400000 - 3 + ((w1.getDay() + 6) % 7)) / 7);
+  }
+  function pesoCard(y) {
+    const list = y.pesos.slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    const last = list[list.length - 1];
+    const first = list[0];
+    const goal = Number(y.pesoObjetivo) || null;
+    const fmtKg = (n) => Number(n).toLocaleString('es-ES', { maximumFractionDigits: 1 });
+    let chart = '';
+    if (list.length > 1) {
+      const vals = list.map((p) => Number(p.kg)).concat(goal ? [goal] : []);
+      const min = Math.min(...vals) - 1, max = Math.max(...vals) + 1;
+      const W = 300, H = 90;
+      const x = (i) => (list.length === 1 ? W / 2 : (i / (list.length - 1)) * (W - 12) + 6);
+      const yy = (v) => H - 6 - ((v - min) / (max - min)) * (H - 12);
+      const pts = list.map((p, i) => `${x(i)},${yy(Number(p.kg))}`).join(' ');
+      chart = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;margin-top:12px">
+        ${goal ? `<line x1="0" x2="${W}" y1="${yy(goal)}" y2="${yy(goal)}" stroke="var(--green)" stroke-dasharray="4 4" stroke-width="1"/>` : ''}
+        <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${list.map((p, i) => `<circle cx="${x(i)}" cy="${yy(Number(p.kg))}" r="3" fill="var(--accent)"/>`).join('')}</svg>`;
+    }
+    return `<div class="card">
+      <div class="card-title"><h3>${badge('fisica', 'accent')}Peso</h3><button class="btn sm" id="addPeso">${ic('plus')}Registrar</button></div>
+      ${last ? `<div class="stats">
+          <div class="stat accent"><div class="n">${fmtKg(last.kg)}</div><div class="l">kg · semana ${isoWeek(last.fecha)}</div></div>
+          <div class="stat ${first && last.kg - first.kg <= 0 ? 'green' : ''}"><div class="n">${first ? (last.kg - first.kg > 0 ? '+' : '') + fmtKg(last.kg - first.kg) : '—'}</div><div class="l">kg desde el inicio</div></div>
+          <div class="stat green"><div class="n">${goal ? fmtKg(Math.max(0, last.kg - goal)) : '—'}</div><div class="l">${goal ? `kg para ${fmtKg(goal)}` : 'Sin objetivo'}</div></div>
+        </div>${chart}
+        <div style="margin-top:10px">${list.slice().reverse().map((p) => `<div class="item" data-peso="${p.id}" style="padding:9px 0"><div class="body" style="display:flex;justify-content:space-between">
+          <span>Semana ${isoWeek(p.fecha)} <span class="muted" style="font-size:12.5px">· ${fmtDate(p.fecha)}</span></span><b style="font-weight:500">${fmtKg(p.kg)} kg</b></div></div>`).join('')}</div>`
+      : '<div class="empty">Registra tu peso para ver la evolución.</div>'}
+    </div>`;
+  }
+  function pesoSheet(p) {
+    const y = Y();
+    const isNew = !p;
+    const d = p || { fecha: defaultDate(), kg: '' };
+    openSheet(`
+      <h3>${isNew ? 'Registrar peso' : 'Editar peso'}</h3>
+      <form id="pf">
+        <div class="row2">
+          <label>Fecha<input type="date" name="fecha" required value="${esc(d.fecha)}" /></label>
+          <label>Kg<input name="kg" required inputmode="decimal" value="${esc(String(d.kg).replace('.', ','))}" placeholder="Ej. 124,2" /></label>
+        </div>
+        <label>Peso objetivo (kg)<input name="obj" inputmode="decimal" value="${esc(String(y.pesoObjetivo || '').replace('.', ','))}" placeholder="Ej. 99" /></label>
+        <div class="sheet-actions">
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
+          <button type="submit" class="btn primary">Guardar</button>
+        </div>
+      </form>`, (el) => {
+      $('#pf', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const kg = parseFloat(f.kg.value.replace(',', '.'));
+        if (!f.fecha.value || !isFinite(kg)) { toast('Revisa la fecha y el peso'); return; }
+        const obj = parseFloat(f.obj.value.replace(',', '.'));
+        y.pesoObjetivo = isFinite(obj) ? obj : '';
+        if (isNew) y.pesos.push({ id: uid(), fecha: f.fecha.value, kg });
+        else Object.assign(p, { fecha: f.fecha.value, kg });
+        closeSheet(); commit(); toast('Peso guardado');
+      });
+      const del = $('#del', el);
+      if (del) del.addEventListener('click', () => {
+        if (!confirm('¿Eliminar este registro de peso?')) return;
+        y.pesos = y.pesos.filter((z) => z.id !== p.id);
+        closeSheet(); commit();
+      });
+    });
   }
   function bindObjetivos(v) {
     const y = Y();
-    $$('.goal-text', v).forEach((inp) => inp.addEventListener('input', () => {
-      y.objetivos[inp.dataset.area][inp.dataset.i].text = inp.value;
-      commit(false);
-    }));
+    $('#addPeso', v).addEventListener('click', () => pesoSheet(null));
+    $$('[data-peso]', v).forEach((el) => el.addEventListener('click', () => pesoSheet(y.pesos.find((p) => p.id === el.dataset.peso))));
+    const grow = (el) => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
+    $$('.goal-text', v).forEach((inp) => {
+      grow(inp);
+      inp.addEventListener('input', () => {
+        grow(inp);
+        y.objetivos[inp.dataset.area][inp.dataset.i].text = inp.value;
+        commit(false);
+      });
+    });
     $$('.check', v).forEach((b) => b.addEventListener('click', () => {
       const g = y.objetivos[b.dataset.area][b.dataset.i];
       g.done = !g.done;
@@ -488,10 +599,14 @@
   }
   function habitCard(h) {
     const d = habitDays(h);
+    const noStreak = !h.streakStart;
     const month = h.month !== '' && h.month != null ? `Mes: ${MONTHS_FULL[h.month]}` : '';
     const sub = [month, h.attempts ? `${h.attempts} reinicio${h.attempts > 1 ? 's' : ''}` : '', h.best ? `Mejor racha: ${h.best} días` : ''].filter(Boolean).join(' · ');
     let right = '', body = '', actions = '';
-    if (h.status === 'proceso') {
+    if (h.status === 'proceso' && noStreak) {
+      body = `<div class="habit-sub">Sin racha en marcha.</div>`;
+      actions = `<button class="btn sm primary" data-act="start" data-id="${h.id}">Empezar racha hoy</button>`;
+    } else if (h.status === 'proceso') {
       right = `<div class="streak"><div class="n">${d}</div><div class="l">días seguidos</div></div>`;
       body = `<div class="progress streak-bar"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div>
         ${d >= HABIT_GOAL ? `<div class="hint">${d} días seguidos: ya puedes darlo por conseguido.</div>` : ''}`;
@@ -500,7 +615,7 @@
     } else if (h.status === 'banquillo') {
       actions = `<button class="btn sm primary" data-act="start" data-id="${h.id}">Empezar hoy</button>`;
     } else {
-      right = `<div class="streak"><div class="n" style="color:var(--green)">${d}</div><div class="l">días</div></div>`;
+      right = noStreak ? '' : `<div class="streak"><div class="n" style="color:var(--green)">${d}</div><div class="l">días</div></div>`;
       body = h.wonDate ? `<div class="habit-sub" style="color:var(--green)">Conseguido el ${fmtDate(h.wonDate)}</div>` : '';
       actions = `<button class="btn sm ghost" data-act="relapse" data-id="${h.id}">Lo he perdido</button>`;
     }
@@ -563,7 +678,7 @@
         const f = e.target;
         const vals = { name: f.name.value.trim(), status: f.status.value, month: f.month.value === '' ? '' : Number(f.month.value), streakStart: f.streakStart.value, notes: f.notes.value.trim() };
         if (!vals.name) return;
-        if ((vals.status === 'proceso' || vals.status === 'conseguido') && !vals.streakStart) vals.streakStart = todayISO();
+        if (vals.status === 'proceso' && !vals.streakStart && (isNew || h.status !== 'proceso')) vals.streakStart = todayISO();
         if (isNew) Y().habitos.push({ id: uid(), attempts: 0, best: 0, ...vals });
         else Object.assign(h, vals);
         habitFilter = vals.status;
@@ -585,6 +700,7 @@
     const yearTrips = yearList(y.viajes, 'inicio');
     const counts = countByMonth(y.viajes, 'inicio');
     const days = yearTrips.reduce((s, t) => s + (t.fin && t.fin >= t.inicio ? daysBetween(t.inicio, t.fin) + 1 : 1), 0);
+    const exact = yearTrips.every((t) => !t.soloMes);
     const groups = {};
     trips.forEach((t) => { const k = monthOf(t.inicio); (groups[k] = groups[k] || []).push(t); });
     return `
@@ -592,16 +708,16 @@
       <div class="card">
         <div class="stats">
           <div class="stat sky"><div class="n">${yearTrips.length}</div><div class="l">Viajes</div></div>
-          <div class="stat"><div class="n">${days}</div><div class="l">Días fuera</div></div>
+          <div class="stat"><div class="n">${exact ? days : `${days}+`}</div><div class="l">Días fuera${exact ? '' : ' (mín.)'}</div></div>
           <div class="stat green"><div class="n">${counts.filter(Boolean).length}<span style="font-size:14px;color:var(--muted)">/12</span></div><div class="l">Meses con viaje</div></div>
         </div>
         <div style="margin-top:18px">${monthBars(counts, 'sky')}</div>
       </div>
       ${trips.length ? Object.keys(groups).sort((a, b) => b - a).map((m) => `
         <div class="card"><div class="sub-title">${MONTHS_FULL[m]} · ${groups[m].length} viaje${groups[m].length > 1 ? 's' : ''}</div>
-          ${groups[m].map((t) => `<div class="item" data-id="${t.id}">${dateBox(t.inicio)}<div class="body">
+          ${groups[m].map((t) => `<div class="item" data-id="${t.id}">${dateBox(t.inicio, t.soloMes)}<div class="body">
             <div class="title">${esc(t.destino)}</div>
-            <div class="desc">${fmtDate(t.inicio)}${t.fin && t.fin !== t.inicio ? ` – ${fmtDate(t.fin)} · ${daysBetween(t.inicio, t.fin) + 1} días` : ''}${t.con ? ` · con ${esc(t.con)}` : ''}</div>
+            <div class="desc">${t.soloMes ? `${MONTHS_FULL[monthOf(t.inicio)]} ${yearOf(t.inicio)} · sin fecha exacta` : fmtDate(t.inicio)}${!t.soloMes && t.fin && t.fin !== t.inicio ? ` – ${fmtDate(t.fin)} · ${daysBetween(t.inicio, t.fin) + 1} días` : ''}${t.con ? ` · con ${esc(t.con)}` : ''}</div>
             ${t.notas ? `<div class="desc">${esc(t.notas)}</div>` : ''}</div></div>`).join('')}
         </div>`).join('') : '<div class="empty-card">Aún no hay viajes registrados este año.</div>'}
       ${fab('addTrip', 'Viaje')}`;
@@ -626,6 +742,7 @@
           <label>Ida<input type="date" name="inicio" required value="${esc(d.inicio)}" /></label>
           <label>Vuelta<input type="date" name="fin" value="${esc(d.fin)}" /></label>
         </div>
+        <label class="inline-check"><input type="checkbox" name="soloMes" ${d.soloMes ? 'checked' : ''} /> Solo sé el mes (sin día exacto)</label>
         <label>Con quién<input name="con" value="${esc(d.con)}" placeholder="Opcional" /></label>
         <label>Notas<textarea name="notas" placeholder="Lo mejor del viaje">${esc(d.notas)}</textarea></label>
         <div class="sheet-actions">
@@ -636,7 +753,7 @@
       $('#tf', el).addEventListener('submit', (e) => {
         e.preventDefault();
         const f = e.target;
-        const vals = { destino: f.destino.value.trim(), inicio: f.inicio.value, fin: f.fin.value, con: f.con.value.trim(), notas: f.notas.value.trim() };
+        const vals = { destino: f.destino.value.trim(), inicio: f.inicio.value, fin: f.fin.value, con: f.con.value.trim(), notas: f.notas.value.trim(), soloMes: f.soloMes.checked };
         if (!vals.destino || !vals.inicio) return;
         if (vals.fin && vals.fin < vals.inicio) { toast('La vuelta no puede ser anterior a la ida'); return; }
         if (isNew) {
@@ -747,7 +864,10 @@
         <div class="section-head"><div class="kicker">Luz ${year}</div><h2>Lo que me da luz</h2>
           <p>Momentos en los que vibras, para encontrar patrones.</p></div>
         ${seg}
-        <div class="card"><div class="card-title"><h3>${badge('chart', 'gold')}Patrones</h3></div>
+        <div class="card"><div class="card-title"><h3>${badge('luz', 'gold')}Cuándo soy más feliz</h3><button class="btn sm" id="editFeliz">Editar</button></div>
+          ${y.felizCuando.length ? `<ol class="olist">${y.felizCuando.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : '<div class="empty">Escribe las situaciones en las que más vibras.</div>'}
+        </div>
+        <div class="card"><div class="card-title"><h3>${badge('chart', 'gold')}Patrones de tus momentos</h3></div>
           ${tagsSorted.length ? `<div class="bars-h">${tagsSorted.map(([t, n]) => `<div class="row"><span class="lbl">${esc(t)}</span><span class="track"><i style="width:${(n / maxT) * 100}%"></i></span><span class="val">${n}</span></div>`).join('')}</div>` : '<div class="empty">Etiqueta tus momentos para ver qué se repite.</div>'}
           <div style="margin-top:16px">${monthBars(countByMonth(y.felicidad, 'fecha'), 'gold')}</div>
           ${wdLabel ? `<p class="insight">El día de la semana con más momentos felices es el <b>${wdLabel}</b>.</p>` : ''}
@@ -765,7 +885,7 @@
       ${seg}
       <div class="card"><div class="card-title"><h3>${badge('dar', 'green')}Por meses</h3><span class="meta">${dar.length} este año</span></div>${monthBars(countByMonth(y.dar, 'fecha'), 'green')}</div>
       <div class="card"><div class="card-title"><h3>Registro</h3></div>
-        ${dar.length ? dar.map((m) => `<div class="item" data-id="${m.id}" data-kind="dar">${dateBox(m.fecha)}<div class="body">
+        ${dar.length ? dar.map((m) => `<div class="item" data-id="${m.id}" data-kind="dar">${dateBox(m.fecha, m.soloMes)}<div class="body">
           <div class="desc main">${esc(m.texto)}</div>
           ${m.para ? `<div class="tags"><span class="tag green">Para ${esc(m.para)}</span></div>` : ''}</div></div>`).join('') : '<div class="empty">Nada registrado todavía.</div>'}
       </div>
@@ -775,6 +895,19 @@
     const y = Y();
     $$('.seg button', v).forEach((b) => b.addEventListener('click', () => { luzFilter = b.dataset.f; render(); }));
     $('#addLuz', v).addEventListener('click', () => (luzFilter === 'felicidad' ? happySheet(null) : giveSheet(null)));
+    const ef = $('#editFeliz', v);
+    if (ef) ef.addEventListener('click', () => openSheet(`
+      <h3>Cuándo soy más feliz</h3>
+      <form id="ff">
+        <label>Una situación por línea<textarea name="t" style="min-height:260px">${esc(y.felizCuando.join('\n'))}</textarea></label>
+        <div class="sheet-actions"><button type="submit" class="btn primary">Guardar</button></div>
+      </form>`, (el) => {
+      $('#ff', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        y.felizCuando = e.target.t.value.split('\n').map((x) => x.trim()).filter(Boolean);
+        closeSheet(); commit();
+      });
+    }));
     $$('.item[data-id]', v).forEach((el) => el.addEventListener('click', () => {
       if (el.dataset.kind === 'felicidad') happySheet(y.felicidad.find((x) => x.id === el.dataset.id));
       else giveSheet(y.dar.find((x) => x.id === el.dataset.id));
@@ -853,6 +986,7 @@
           <label>Fecha<input type="date" name="fecha" required value="${esc(d.fecha)}" /></label>
           <label>Para quién<input name="para" value="${esc(d.para)}" placeholder="Opcional" /></label>
         </div>
+        <label class="inline-check"><input type="checkbox" name="soloMes" ${d.soloMes ? 'checked' : ''} /> Solo sé el mes (sin día exacto)</label>
         <div class="sheet-actions">
           ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
           <button type="submit" class="btn primary">Guardar</button>
@@ -861,7 +995,7 @@
       $('#gf', el).addEventListener('submit', (e) => {
         e.preventDefault();
         const f = e.target;
-        const vals = { fecha: f.fecha.value, texto: f.texto.value.trim(), para: f.para.value.trim() };
+        const vals = { fecha: f.fecha.value, texto: f.texto.value.trim(), para: f.para.value.trim(), soloMes: f.soloMes.checked };
         if (!vals.texto || !vals.fecha) return;
         if (isNew) { if (yearOf(vals.fecha) !== year) year = yearOf(vals.fecha); Y().dar.push({ id: uid(), ...vals }); }
         else Object.assign(m, vals);
