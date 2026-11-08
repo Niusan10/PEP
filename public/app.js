@@ -681,84 +681,90 @@
   }
   function viewHabitos() {
     const y = Y();
-    const list = y.habitos.filter((h) => h.status === habitFilter);
     const prev = state.years[year - 1];
     const canImport = !y.habitos.length && prev && prev.habitos && prev.habitos.length;
-    const desc = {
-      conseguido: `Más de ${HABIT_GOAL} días seguidos: ya forman parte de tu rutina.`,
-      proceso: 'Cuenta los días seguidos. Si fallas, reinicia la racha.',
-      banquillo: 'Pendientes de empezar. Idealmente, uno nuevo cada mes.',
-    }[habitFilter];
+    const cols = HABIT_COLS.map((c) => {
+      const list = y.habitos.filter((h) => h.status === c.key)
+        .sort((p, q) => (c.key === 'proceso' ? habitDays(q) - habitDays(p) : 0) || ((p.orden || 0) - (q.orden || 0)));
+      return `<section class="kcol ${c.key}">
+        <header class="kcol-head"><span class="kdot"></span><span class="ktitle">${c.label}</span><span class="kcount">${list.length}</span>
+          <button class="kadd" data-add-col="${c.key}" aria-label="Añadir a ${c.label}">${ic('plus')}</button></header>
+        <div class="kcol-body">${list.length ? list.map(habitTile).join('') : '<div class="kempty">Vacío</div>'}</div>
+      </section>`;
+    }).join('');
     return `
-      <div class="section-head"><div class="kicker">Hábitos ${year}</div><h2>Consolidar hábitos</h2><p>${desc}</p></div>
-      <div class="seg">${HABIT_COLS.map((c) => `<button data-f="${c.key}" class="${c.key === habitFilter ? 'active' : ''}">${c.label}<span class="cnt">${y.habitos.filter((h) => h.status === c.key).length}</span></button>`).join('')}</div>
+      <div class="section-head"><div class="kicker">Hábitos ${year}</div><h2>Consolidar hábitos</h2>
+        <p>${HABIT_GOAL} días seguidos para pasar a conseguido. Toca un hábito para ver sus acciones.</p></div>
       ${canImport ? `<div class="card"><p style="margin:0 0 12px">Este año aún no tiene hábitos.</p><button class="btn primary sm" id="importHabits">Traer hábitos de ${year - 1}</button></div>` : ''}
-      ${list.length ? list.map(habitCard).join('') : `<div class="empty-card">No hay hábitos en esta columna.</div>`}
+      <div class="kanban">${cols}</div>
       ${fab('addHabit', 'Hábito')}`;
   }
-  function habitCard(h) {
+  function habitTile(h) {
     const d = habitDays(h);
-    const noStreak = !h.streakStart;
-    const month = h.month !== '' && h.month != null ? `Mes: ${MONTHS_FULL[h.month]}` : '';
-    const sub = [month, h.attempts ? `${h.attempts} reinicio${h.attempts > 1 ? 's' : ''}` : '', h.best ? `Mejor racha: ${h.best} días` : ''].filter(Boolean).join(' · ');
-    let right = '', body = '', actions = '';
-    if (h.status === 'proceso' && noStreak) {
-      body = `<div class="habit-sub">Sin racha en marcha.</div>`;
-      actions = `<button class="btn sm primary" data-act="start" data-id="${h.id}">Empezar racha hoy</button>`;
-    } else if (h.status === 'proceso') {
-      right = `<div class="streak"><div class="n">${d}</div><div class="l">días seguidos</div></div>`;
-      body = `<div class="progress streak-bar"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div>
-        ${d >= HABIT_GOAL ? `<div class="hint">${d} días seguidos: ya puedes darlo por conseguido.</div>` : ''}`;
-      actions = `<button class="btn sm danger" data-act="reset" data-id="${h.id}">He fallado, reiniciar</button>
-        ${d >= HABIT_GOAL ? `<button class="btn sm primary" data-act="win" data-id="${h.id}">Marcar conseguido</button>` : ''}`;
-    } else if (h.status === 'banquillo') {
-      actions = `<button class="btn sm primary" data-act="start" data-id="${h.id}">Empezar hoy</button>`;
-    } else {
-      right = noStreak ? '' : `<div class="streak"><div class="n" style="color:var(--green)">${d}</div><div class="l">días</div></div>`;
-      body = h.wonDate ? `<div class="habit-sub" style="color:var(--green)">Conseguido el ${fmtDate(h.wonDate)}</div>` : '';
-      actions = `<button class="btn sm ghost" data-act="relapse" data-id="${h.id}">Lo he perdido</button>`;
+    let meta = '';
+    if (h.status === 'proceso') {
+      meta = h.streakStart
+        ? `<div class="kmeta"><b>${d}</b> / ${HABIT_GOAL} días</div><div class="progress kbar"><i style="width:${Math.min(100, (d / HABIT_GOAL) * 100)}%"></i></div>
+           ${d >= HABIT_GOAL ? '<div class="kready">Listo para conseguido</div>' : ''}`
+        : '<div class="kmeta muted">Sin racha</div>';
+    } else if (h.status === 'conseguido') {
+      meta = `<div class="kmeta kok">${ic('check')}${h.streakStart ? `${d} días` : 'Consolidado'}</div>`;
+    } else if (h.month !== '' && h.month != null) {
+      meta = `<div class="kmeta muted">${MONTHS_FULL[h.month]}</div>`;
     }
-    return `<div class="habit ${h.status}">
-      <div class="habit-top"><div><div class="habit-name">${esc(h.name)}</div>${sub ? `<div class="habit-sub">${sub}</div>` : ''}
-        ${h.notes ? `<div class="habit-sub">${esc(h.notes)}</div>` : ''}</div>${right}</div>
-      ${body}
-      <div class="habit-actions">${actions}<button class="btn sm ghost" data-act="edit" data-id="${h.id}">Editar</button></div>
-    </div>`;
+    return `<button class="ktile" data-habit="${h.id}"><div class="kname">${esc(h.name)}</div>${meta}</button>`;
+  }
+  function habitAction(h, act) {
+    if (act === 'start') { h.status = 'proceso'; h.streakStart = todayISO(); toast('Día 1. A por ello'); }
+    if (act === 'reset') {
+      const d = habitDays(h);
+      if (!confirm(`¿Reiniciar la racha de "${h.name}"? Llevabas ${d} días.`)) return false;
+      h.best = Math.max(h.best || 0, d - 1);
+      h.attempts = (h.attempts || 0) + 1;
+      h.streakStart = todayISO();
+      toast('Racha reiniciada');
+    }
+    if (act === 'win') { h.best = Math.max(h.best || 0, habitDays(h)); h.status = 'conseguido'; h.wonDate = todayISO(); toast('Hábito consolidado'); }
+    if (act === 'relapse') { h.status = 'proceso'; h.best = Math.max(h.best || 0, habitDays(h)); h.attempts = (h.attempts || 0) + 1; h.streakStart = todayISO(); h.wonDate = ''; }
+    if (act === 'bench') { h.status = 'banquillo'; h.streakStart = ''; }
+    return true;
   }
   function bindHabitos(v) {
     const y = Y();
-    $$('.seg button', v).forEach((b) => b.addEventListener('click', () => { habitFilter = b.dataset.f; render(); }));
     const imp = $('#importHabits', v);
     if (imp) imp.addEventListener('click', () => {
       y.habitos = state.years[year - 1].habitos.map((h) => ({ ...h, id: uid() }));
       commit();
       toast('Hábitos traídos del año anterior');
     });
-    $('#addHabit', v).addEventListener('click', () => habitSheet(null));
-    $$('[data-act]', v).forEach((b) => b.addEventListener('click', () => {
-      const h = y.habitos.find((x) => x.id === b.dataset.id);
-      if (!h) return;
-      const act = b.dataset.act;
-      if (act === 'edit') return habitSheet(h);
-      if (act === 'start') { h.status = 'proceso'; h.streakStart = todayISO(); habitFilter = 'proceso'; toast('Día 1. A por ello'); }
-      if (act === 'reset') {
-        const d = habitDays(h);
-        if (!confirm(`¿Reiniciar la racha de "${h.name}"? Llevabas ${d} días.`)) return;
-        h.best = Math.max(h.best || 0, d - 1);
-        h.attempts = (h.attempts || 0) + 1;
-        h.streakStart = todayISO();
-        toast('Racha reiniciada');
-      }
-      if (act === 'win') { h.best = Math.max(h.best || 0, habitDays(h)); h.status = 'conseguido'; h.wonDate = todayISO(); habitFilter = 'conseguido'; toast('Hábito consolidado'); }
-      if (act === 'relapse') { h.status = 'proceso'; h.best = Math.max(h.best || 0, habitDays(h)); h.attempts = (h.attempts || 0) + 1; h.streakStart = todayISO(); h.wonDate = ''; habitFilter = 'proceso'; }
-      commit();
-    }));
+    $('#addHabit', v).addEventListener('click', () => habitSheet(null, 'proceso'));
+    $$('[data-add-col]', v).forEach((b) => b.addEventListener('click', () => habitSheet(null, b.dataset.addCol)));
+    $$('[data-habit]', v).forEach((b) => b.addEventListener('click', () => habitSheet(y.habitos.find((x) => x.id === b.dataset.habit))));
   }
-  function habitSheet(h) {
+  function habitSheet(h, col) {
     const isNew = !h;
-    const d = h || { name: '', status: habitFilter, month: new Date().getMonth(), notes: '', streakStart: todayISO() };
+    const d = h || { name: '', status: col || 'proceso', month: new Date().getMonth(), notes: '', streakStart: (col || 'proceso') === 'proceso' ? todayISO() : '' };
+    let actions = '', info = '';
+    if (!isNew) {
+      const dd = habitDays(h);
+      const extra = [h.best ? `Mejor racha: ${h.best} días` : '', h.attempts ? `${h.attempts} reinicio${h.attempts > 1 ? 's' : ''}` : '', h.wonDate ? `Conseguido el ${fmtDate(h.wonDate)}` : ''].filter(Boolean).join(' · ');
+      if (h.status === 'proceso' && h.streakStart) {
+        info = `<div class="hs-streak"><b>${dd}</b><span>días seguidos de ${HABIT_GOAL}</span></div><div class="progress" style="margin-bottom:6px"><i style="width:${Math.min(100, (dd / HABIT_GOAL) * 100)}%"></i></div>`;
+        actions = `<button type="button" class="btn sm danger" data-hact="reset">He fallado, reiniciar</button>
+          <button type="button" class="btn sm ${dd >= HABIT_GOAL ? 'primary' : ''}" data-hact="win">Marcar conseguido</button>
+          <button type="button" class="btn sm ghost" data-hact="bench">Al banquillo</button>`;
+      } else if (h.status === 'proceso') {
+        actions = `<button type="button" class="btn sm primary" data-hact="start">Empezar racha hoy</button><button type="button" class="btn sm ghost" data-hact="bench">Al banquillo</button>`;
+      } else if (h.status === 'banquillo') {
+        actions = `<button type="button" class="btn sm primary" data-hact="start">Empezar hoy</button>`;
+      } else {
+        actions = `<button type="button" class="btn sm ghost" data-hact="relapse">Lo he perdido, volver a proceso</button>`;
+      }
+      if (extra) info += `<div class="habit-sub" style="margin-bottom:6px">${extra}</div>`;
+    }
     openSheet(`
-      <h3>${isNew ? 'Nuevo hábito' : 'Editar hábito'}</h3>
+      <h3>${isNew ? 'Nuevo hábito' : esc(h.name)}</h3>
+      ${isNew ? '' : `${info}<div class="habit-actions" style="margin:0 0 18px">${actions}</div><div class="sub-title">Editar</div>`}
       <form id="hf">
         <label>Hábito<input name="name" required value="${esc(d.name)}" placeholder="Ej. Meditar 10 minutos" /></label>
         <label>Columna<select name="status">${HABIT_COLS.map((c) => `<option value="${c.key}" ${c.key === d.status ? 'selected' : ''}>${c.label}</option>`).join('')}</select></label>
@@ -772,6 +778,9 @@
           <button type="submit" class="btn primary">Guardar</button>
         </div>
       </form>`, (el) => {
+      $$('[data-hact]', el).forEach((b) => b.addEventListener('click', () => {
+        if (habitAction(h, b.dataset.hact)) { closeSheet(); commit(); }
+      }));
       $('#hf', el).addEventListener('submit', (e) => {
         e.preventDefault();
         const f = e.target;
@@ -780,7 +789,6 @@
         if (vals.status === 'proceso' && !vals.streakStart && (isNew || h.status !== 'proceso')) vals.streakStart = todayISO();
         if (isNew) Y().habitos.push({ id: uid(), attempts: 0, best: 0, ...vals });
         else Object.assign(h, vals);
-        habitFilter = vals.status;
         closeSheet(); commit();
       });
       const del = $('#del', el);
