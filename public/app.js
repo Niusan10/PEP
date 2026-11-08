@@ -398,6 +398,16 @@
         <div class="progress green" style="margin-top:10px"><i style="width:${(goalsDone / goalsTotal) * 100}%"></i></div>
         <div class="s">${goalsDone} de ${goalsTotal} objetivos conseguidos</div></div></div></div>
 
+      <div class="card link" data-go="oscuridad">
+        <div class="card-title"><h3>${badge('check', 'green')}Rachas limpias</h3><span class="meta">${dark.length} recaídas en ${year}</span></div>
+        <div class="streak-tiles">${DARK.map((d) => { const s = streakInfo(d.key);
+          const tone = !s ? '' : s.current >= 30 ? 'great' : s.current >= 7 ? 'good' : s.current === 0 ? 'zero' : '';
+          return `<div class="st ${tone}">${s && s.isRecord ? '<span class="sr-badge sm">Récord</span>' : ''}
+            <div class="st-num">${s ? s.current : '—'}</div><div class="st-unit">${s ? (s.current === 1 ? 'día' : 'días') : ''}</div>
+            <div class="st-lbl">${SIN_LABEL[d.key]}</div>
+            ${s ? `<div class="st-sub">${s.isRecord ? (s.next ? `meta ${s.next}` : 'máximo') : `récord ${s.prevBest}`}</div>` : ''}</div>`; }).join('')}</div>
+      </div>
+
       <div class="card link" data-go="objetivos">
         <div class="card-title"><h3>${badge('objetivos', 'green')}Objetivos</h3><span class="meta">${goalsDone}/${goalsTotal}</span></div>
         ${AREAS.map((a) => { const l = y.objetivos[a.key]; const d = l.filter((g) => g.done).length; const t = Math.max(2, l.filter((g) => g.text.trim()).length);
@@ -420,13 +430,6 @@
       <div class="card link" data-go="viajes">
         <div class="card-title"><h3>${badge('viajes', 'sky')}Viajes</h3><span class="meta">${trips.length} viajes · ${tripMonths}/12 meses</span></div>
         ${monthBars(countByMonth(y.viajes, 'inicio'), 'sky')}
-      </div>
-
-      <div class="card link" data-go="oscuridad">
-        <div class="card-title"><h3>${badge('oscuridad', 'night')}Oscuridad</h3><span class="meta">${dark.length} registros</span></div>
-        <div class="stats">
-          ${DARK.map((d) => `<div class="stat night"><div class="n">${dark.filter((x) => x.tipo === d.key).length}</div><div class="l">${d.label}<br>${sinceLast(d.key)}</div></div>`).join('')}
-        </div>
       </div>
 
       <div class="card link" data-go="luz">
@@ -869,6 +872,51 @@
     });
   }
 
+  // ----- Rachas limpias -----
+  const MILESTONES = [7, 15, 30, 60, 90, 180, 365, 730];
+  const SIN_LABEL = { borrachera: 'sin borracheras', atracon: 'sin atracones', malo: 'sin ponerme malo' };
+  function streakInfo(tipo) {
+    const today = todayISO();
+    const dates = Array.from(new Set(Object.values(state.years).flatMap((yy) => (yy.oscuridad || [])
+      .filter((x) => x.tipo === tipo && x.fecha && x.fecha <= today).map((x) => x.fecha)))).sort();
+    if (!dates.length) return null;
+    const last = dates[dates.length - 1];
+    const current = daysBetween(last, today);
+    let best = 0;
+    for (let i = 1; i < dates.length; i++) best = Math.max(best, daysBetween(dates[i - 1], dates[i]));
+    const prevBest = best;
+    best = Math.max(best, current);
+    const next = MILESTONES.find((m) => m > current) || null;
+    const isRecord = current > 0 && current >= prevBest;
+    return { last, current, best, prevBest, next, isRecord };
+  }
+  function streakRow(d, big) {
+    const s = streakInfo(d.key);
+    if (!s) return `<div class="streak-row"><div class="sr-icon">${ic(d.icon)}</div><div class="sr-main">
+      <div class="sr-num"><b>—</b></div><div class="sr-lbl">${SIN_LABEL[d.key]}</div><div class="sr-sub">Sin registros todavía</div></div></div>`;
+    const target = s.isRecord ? (s.next || s.current) : s.prevBest;
+    const pct = target ? Math.min(100, (s.current / target) * 100) : 100;
+    const tone = s.current >= 30 ? 'great' : s.current >= 7 ? 'good' : s.current === 0 ? 'zero' : '';
+    return `<div class="streak-row ${tone} ${big ? 'big' : ''}">
+      <div class="sr-icon">${ic(d.icon)}</div>
+      <div class="sr-main">
+        <div class="sr-top"><div class="sr-num"><b>${s.current}</b><span>${s.current === 1 ? 'día' : 'días'}</span></div>
+          ${s.isRecord ? '<span class="sr-badge">Récord</span>' : ''}</div>
+        <div class="sr-lbl">${SIN_LABEL[d.key]}</div>
+        <div class="progress sr-bar"><i style="width:${pct}%"></i></div>
+        <div class="sr-sub">${s.isRecord
+          ? (s.next ? `Superando tu récord · próxima meta: ${s.next} días` : 'Tu mejor racha de siempre')
+          : `Récord: ${s.prevBest} días · te faltan ${s.prevBest - s.current} para batirlo`}${big ? ` · última vez el ${fmtDate(s.last)}` : ''}</div>
+      </div>
+    </div>`;
+  }
+  function streaksCard(big) {
+    return `<div class="card streaks-card">
+      <div class="card-title"><h3>${badge('check', 'green')}Rachas limpias</h3><span class="meta">días seguidos</span></div>
+      ${DARK.map((d) => streakRow(d, big)).join('')}
+    </div>`;
+  }
+
   // ----- Oscuridad -----
   function viewOscuridad() {
     const y = Y();
@@ -878,6 +926,7 @@
     return `
       <div class="section-head"><div class="kicker">Oscuridad ${year}</div><h2>Lo que quiero reducir</h2>
         <p>Registrar sin juzgar. Ver el patrón es el primer paso.</p></div>
+      ${streaksCard(true)}
       <div class="dark-grid">
         ${DARK.map((d) => {
           const l = last(d.key);
@@ -885,7 +934,7 @@
           return `<button class="dark-btn" data-add="${d.key}">
             ${badge(d.icon, 'night')}<div class="n">${list.filter((x) => x.tipo === d.key).length}</div>
             <div class="l">${d.label}</div>
-            <div class="s">${since == null ? 'Sin registros' : since < 0 ? '—' : since === 0 ? 'Hoy' : `${since} días sin`}</div>
+            <div class="s">en ${year}</div>
             <span class="plus">${ic('plus')}Registrar</span></button>`;
         }).join('')}
       </div>
