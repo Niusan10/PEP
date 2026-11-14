@@ -17,7 +17,7 @@ async function streamToText(stream) {
 function yearIsEmpty(y) {
   if (!y) return true;
   const objs = Object.values(y.objetivos || {}).flat().some((g) => g && String(g.text || '').trim());
-  const lists = ['habitos', 'viajes', 'oscuridad', 'felicidad', 'dar', 'pesos', 'felizCuando'].some((k) => (y[k] || []).length);
+  const lists = ['habitos', 'viajes', 'oscuridad', 'felicidad', 'dar', 'decisiones', 'pesos', 'felizCuando'].some((k) => (y[k] || []).length);
   return !objs && !lists && !y.lema;
 }
 

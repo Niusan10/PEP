@@ -35,6 +35,7 @@
     atracon: '<path d="M7 3.5v17M4.5 3.5v5a2.5 2.5 0 0 0 5 0v-5"/><path d="M17.5 20.5v-17c-2 0-3.5 2.2-3.5 5.5s1.5 4.5 3.5 4.5"/>',
     malo: '<path d="M14 14.6V5.5a2 2 0 0 0-4 0v9.1a4 4 0 1 0 4 0z"/><path d="M12 15v-4"/>',
     dar: '<path d="M12 20s-7.5-4.5-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.5 12 20 12 20z"/>',
+    decision: '<path d="M13.5 2.8L5 13.5h6l-1 7.7 8.5-10.7h-6z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
@@ -84,7 +85,7 @@
   function emptyYear() {
     const objetivos = {};
     AREAS.forEach((a) => { objetivos[a.key] = [{ text: '', done: false, date: '' }, { text: '', done: false, date: '' }]; });
-    return { lema: '', palabraOk: true, retos: [], objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
+    return { lema: '', palabraOk: true, retos: [], objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], decisiones: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
   }
   function Y() {
     if (!state.years[year]) state.years[year] = emptyYear();
@@ -388,6 +389,7 @@
     const dark = yearList(y.oscuridad, 'fecha');
     const fel = yearList(y.felicidad, 'fecha');
     const dar = yearList(y.dar, 'fecha');
+    const dec = yearList(y.decisiones, 'fecha');
     const thisMonth = now.getMonth();
     const inMonth = (l, k) => l.filter((x) => isCurrent && monthOf(x[k]) === thisMonth).length;
     const sinceLast = (tipo) => {
@@ -444,9 +446,10 @@
 
       <div class="card link" data-go="luz">
         <div class="card-title"><h3>${badge('luz', 'gold')}Luz</h3></div>
-        <div class="stats" style="grid-template-columns:1fr 1fr">
+        <div class="stats">
           <div class="stat gold"><div class="n">${fel.length}</div><div class="l">Momentos de felicidad${isCurrent ? `<br>${inMonth(fel, 'fecha')} este mes` : ''}</div></div>
           <div class="stat green"><div class="n">${dar.length}</div><div class="l">Dar sin esperar nada${isCurrent ? `<br>${inMonth(dar, 'fecha')} este mes` : ''}</div></div>
+          <div class="stat sky"><div class="n">${dec.length}</div><div class="l">Decisiones sin pensar${isCurrent ? `<br>${inMonth(dec, 'fecha')} este mes` : ''}</div></div>
         </div>
       </div>
       <button class="fab" id="quickAdd">${ic('plus')}<span>Apuntar</span></button>`;
@@ -487,6 +490,7 @@
       ['viajes', 'Viaje', 'sky', () => tripSheet(null)],
       ['luz', 'Momento feliz', 'gold', () => { luzFilter = 'felicidad'; happySheet(null); }],
       ['dar', 'Dar sin esperar', 'green', () => { luzFilter = 'dar'; giveSheet(null); }],
+      ['decision', 'Decisión sin pensar', 'sky', () => { luzFilter = 'decisiones'; decisionSheet(null); }],
       ['borrachera', 'Borrachera', 'night', () => darkSheet(null, 'borrachera')],
       ['atracon', 'Atracón', 'night', () => darkSheet(null, 'atracon')],
       ['malo', 'Ponerme malo', 'night', () => darkSheet(null, 'malo')],
@@ -990,9 +994,25 @@
     const y = Y();
     const fel = yearList(y.felicidad, 'fecha').sort(byDateDesc('fecha'));
     const dar = yearList(y.dar, 'fecha').sort(byDateDesc('fecha'));
-    const seg = `<div class="seg" style="grid-template-columns:1fr 1fr">
+    const dec = yearList(y.decisiones, 'fecha').sort(byDateDesc('fecha'));
+    const seg = `<div class="seg">
       <button data-f="felicidad" class="${luzFilter === 'felicidad' ? 'active' : ''}">Felicidad<span class="cnt">${fel.length}</span></button>
-      <button data-f="dar" class="${luzFilter === 'dar' ? 'active' : ''}">Dar sin esperar nada<span class="cnt">${dar.length}</span></button></div>`;
+      <button data-f="dar" class="${luzFilter === 'dar' ? 'active' : ''}">Dar sin esperar<span class="cnt">${dar.length}</span></button>
+      <button data-f="decisiones" class="${luzFilter === 'decisiones' ? 'active' : ''}">Decisiones<span class="cnt">${dec.length}</span></button></div>`;
+
+    if (luzFilter === 'decisiones') {
+      return `
+        <div class="section-head"><div class="kicker">Luz ${year}</div><h2>Decisiones sin pensar</h2>
+          <p>Las veces que decidiste en el momento, sin darle vueltas.</p></div>
+        ${seg}
+        <div class="card"><div class="card-title"><h3>${badge('decision', 'sky')}Por meses</h3><span class="meta">${dec.length} este año</span></div>${monthBars(countByMonth(y.decisiones, 'fecha'), 'sky')}</div>
+        <div class="card"><div class="card-title"><h3>Registro</h3></div>
+          ${dec.length ? dec.map((m) => `<div class="item" data-id="${m.id}" data-kind="decisiones">${dateBox(m.fecha, m.soloMes)}<div class="body">
+            <div class="desc main">${esc(m.texto)}</div>
+            ${m.resultado ? `<div class="muted" style="font-size:13px;margin-top:4px">${esc(m.resultado)}</div>` : ''}</div></div>`).join('') : '<div class="empty">Nada registrado todavía.</div>'}
+        </div>
+        ${fab('addLuz', 'Decisión')}`;
+    }
 
     if (luzFilter === 'felicidad') {
       const tagCount = {};
@@ -1036,7 +1056,7 @@
   function bindLuz(v) {
     const y = Y();
     $$('.seg button', v).forEach((b) => b.addEventListener('click', () => { luzFilter = b.dataset.f; render(); }));
-    $('#addLuz', v).addEventListener('click', () => (luzFilter === 'felicidad' ? happySheet(null) : giveSheet(null)));
+    $('#addLuz', v).addEventListener('click', () => (luzFilter === 'felicidad' ? happySheet(null) : luzFilter === 'decisiones' ? decisionSheet(null) : giveSheet(null)));
     const af = $('#addFeliz', v);
     if (af) af.addEventListener('click', () => openSheet(`
       <h3>Cuándo soy más feliz</h3>
@@ -1067,6 +1087,7 @@
     }));
     $$('.item[data-id]', v).forEach((el) => el.addEventListener('click', () => {
       if (el.dataset.kind === 'felicidad') happySheet(y.felicidad.find((x) => x.id === el.dataset.id));
+      else if (el.dataset.kind === 'decisiones') decisionSheet(y.decisiones.find((x) => x.id === el.dataset.id));
       else giveSheet(y.dar.find((x) => x.id === el.dataset.id));
     }));
   }
@@ -1162,6 +1183,38 @@
       if (del) del.addEventListener('click', () => {
         if (!confirm('¿Eliminar este registro?')) return;
         const y = Y(); y.dar = y.dar.filter((z) => z.id !== m.id);
+        closeSheet(); commit();
+      });
+    });
+  }
+  function decisionSheet(m) {
+    const isNew = !m;
+    const d = m || { fecha: defaultDate(), texto: '', resultado: '' };
+    openSheet(`
+      <h3>${isNew ? 'Decisión sin pensar' : 'Editar decisión'}</h3>
+      <form id="df">
+        <label>¿Qué decidiste?<textarea name="texto" required placeholder="Ej. Dije que sí al viaje sin mirar el calendario">${esc(d.texto)}</textarea></label>
+        <label>¿Qué pasó después?<input name="resultado" value="${esc(d.resultado || '')}" placeholder="Opcional" /></label>
+        <label>Fecha<input type="date" name="fecha" required value="${esc(d.fecha)}" /></label>
+        <label class="inline-check"><input type="checkbox" name="soloMes" ${d.soloMes ? 'checked' : ''} /> Solo sé el mes (sin día exacto)</label>
+        <div class="sheet-actions">
+          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
+          <button type="submit" class="btn primary">Guardar</button>
+        </div>
+      </form>`, (el) => {
+      $('#df', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const vals = { fecha: f.fecha.value, texto: f.texto.value.trim(), resultado: f.resultado.value.trim(), soloMes: f.soloMes.checked };
+        if (!vals.texto || !vals.fecha) return;
+        if (isNew) { if (yearOf(vals.fecha) !== year) year = yearOf(vals.fecha); Y().decisiones.push({ id: uid(), ...vals }); }
+        else Object.assign(m, vals);
+        closeSheet(); commit(); toast('Decisión guardada');
+      });
+      const del = $('#del', el);
+      if (del) del.addEventListener('click', () => {
+        if (!confirm('¿Eliminar esta decisión?')) return;
+        const y = Y(); y.decisiones = y.decisiones.filter((z) => z.id !== m.id);
         closeSheet(); commit();
       });
     });
