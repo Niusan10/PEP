@@ -68,6 +68,10 @@
   ];
   const DEFAULT_TAGS = ['Viaje', 'Familia', 'Amigos', 'Pareja', 'Deporte', 'Naturaleza', 'Música', 'Comida', 'Trabajo', 'Solo', 'Aventura', 'Mar', 'Montaña'];
   const HABIT_GOAL = 30;
+  // Palabra del año: una sola palabra que resume todo el año (ejercicio de conceptualización).
+  const PALABRAS_INICIALES = { 2026: 'ELEGERE' };
+  const toPalabra = (v) => String(v || '').trim().split(/\s+/)[0].toLocaleUpperCase('es-ES');
+  const isPalabra = (v) => /^[\p{L}\p{N}'’-]+$/u.test(String(v || ''));
 
   // ---------- Estado ----------
   let state = { version: 1, years: {} };
@@ -80,7 +84,7 @@
   function emptyYear() {
     const objetivos = {};
     AREAS.forEach((a) => { objetivos[a.key] = [{ text: '', done: false, date: '' }, { text: '', done: false, date: '' }]; });
-    return { lema: '', retos: [], objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
+    return { lema: '', palabraOk: true, retos: [], objetivos, habitos: [], viajes: [], oscuridad: [], felicidad: [], dar: [], felizCuando: [], pesos: [], pesoObjetivo: '' };
   }
   function Y() {
     if (!state.years[year]) state.years[year] = emptyYear();
@@ -154,6 +158,21 @@
   window.addEventListener('online', () => flush());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
+  // Convierte el antiguo «lema» en la palabra del año (una sola vez por año).
+  function migratePalabras() {
+    let changed = false;
+    for (const [yr, yd] of Object.entries(state.years || {})) {
+      if (!yd || yd.palabraOk) continue;
+      const fixed = PALABRAS_INICIALES[yr] || toPalabra(yd.lema);
+      if (yd.lema !== fixed) yd.lema = fixed;
+      yd.palabraOk = true; changed = true;
+    }
+    for (const [yr, w] of Object.entries(PALABRAS_INICIALES)) {
+      if (!state.years[yr]) { state.years[yr] = emptyYear(); state.years[yr].lema = w; state.years[yr].palabraOk = true; changed = true; }
+    }
+    return changed;
+  }
+
   async function loadData() {
     setSaveState('Cargando…');
     try {
@@ -169,6 +188,7 @@
       }
       loaded = true;
       setSaveState('Guardado');
+      if (migratePalabras()) pending = true;
       persistLocal();
       if (pending) flush();
     } catch (e) {
@@ -379,8 +399,9 @@
     const proc = y.habitos.filter((h) => h.status === 'proceso' && h.streakStart);
 
     return `
-      <div class="section-head"><div class="kicker">Plan ${year}</div><h2>${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
-        <p><button class="linkbtn" id="editLema">${y.lema ? 'Editar lema' : '+ Añadir lema del año'}</button></p></div>
+      <div class="section-head"><div class="kicker">Palabra ${year}</div>
+        <h2 class="${y.lema ? 'palabra' : ''}">${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
+        <p><button class="linkbtn" id="editLema">${y.lema ? 'Cambiar palabra' : '+ Elegir la palabra del año'}</button></p></div>
       <div class="card">
         <div class="card-title"><h3>${badge('objetivos', 'accent')}Retos profesionales</h3><button class="btn sm" id="addReto">${ic('plus')}Reto</button></div>
         ${y.retos.length ? y.retos.map((r) => `
@@ -463,12 +484,21 @@
   function lemaSheet() {
     const y = Y();
     openSheet(`
-      <h3>Lema ${year}</h3>
+      <h3>Palabra ${year}</h3>
+      <p class="muted" style="margin:-4px 0 14px;font-size:14px">Una sola palabra que resuma todo lo que tiene que ser este año.</p>
       <form id="lf">
-        <label>Lema del año<input name="lema" value="${esc(y.lema)}" placeholder="Ej. Elegere & Love" /></label>
+        <label>Palabra del año<input name="lema" value="${esc(y.lema)}" placeholder="Ej. ELEGERE" maxlength="30"
+          autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600" /></label>
         <div class="sheet-actions"><button type="submit" class="btn primary">Guardar</button></div>
       </form>`, (el) => {
-      $('#lf', el).addEventListener('submit', (e) => { e.preventDefault(); y.lema = e.target.lema.value.trim(); closeSheet(); commit(); });
+      const inp = $('#lf input', el);
+      inp.addEventListener('input', () => { const v = inp.value.replace(/\s+/g, ''); if (v !== inp.value) { inp.value = v; toast('Solo una palabra'); } });
+      $('#lf', el).addEventListener('submit', (e) => {
+        e.preventDefault();
+        const w = toPalabra(inp.value);
+        if (w && !isPalabra(w)) { toast('Solo una palabra, sin símbolos'); return; }
+        y.lema = w; y.palabraOk = true; closeSheet(); commit();
+      });
     });
   }
   function retoSheet(r) {
