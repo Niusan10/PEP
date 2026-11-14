@@ -175,7 +175,7 @@ label > input, label > textarea, label > select { margin-top: 6px; }
 
 /* Segmentos */
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 3px; margin-bottom: 14px; }
-.seg button { border: 0; background: none; padding: 9px 4px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; }
+.seg button { border: 0; background: none; padding: 9px 4px; line-height: 1.25; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; }
 .seg button.active { background: var(--surface-3); color: var(--text); }
 .seg .cnt { font-weight: 400; opacity: .65; margin-left: 2px; }
 

@@ -998,7 +998,7 @@
     const seg = `<div class="seg">
       <button data-f="felicidad" class="${luzFilter === 'felicidad' ? 'active' : ''}">Felicidad<span class="cnt">${fel.length}</span></button>
       <button data-f="dar" class="${luzFilter === 'dar' ? 'active' : ''}">Dar sin esperar<span class="cnt">${dar.length}</span></button>
-      <button data-f="decisiones" class="${luzFilter === 'decisiones' ? 'active' : ''}">Decisiones<span class="cnt">${dec.length}</span></button></div>`;
+      <button data-f="decisiones" class="${luzFilter === 'decisiones' ? 'active' : ''}">Decisiones sin pensar<span class="cnt">${dec.length}</span></button></div>`;
 
     if (luzFilter === 'decisiones') {
       return `
