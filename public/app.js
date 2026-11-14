@@ -402,17 +402,6 @@
       <div class="section-head"><div class="kicker">Palabra ${year}</div>
         <h2 class="${y.lema ? 'palabra' : ''}">${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
         <p><button class="linkbtn" id="editLema">${y.lema ? 'Cambiar palabra' : '+ Elegir la palabra del año'}</button></p></div>
-      <div class="card">
-        <div class="card-title"><h3>${badge('objetivos', 'accent')}Retos profesionales</h3><button class="btn sm" id="addReto">${ic('plus')}Reto</button></div>
-        ${y.retos.length ? y.retos.map((r) => `
-          <div class="goal ${r.done ? 'done' : ''}">
-            <button class="check ${r.done ? 'on' : ''}" data-reto-check="${r.id}" aria-label="Marcar conseguido">${ic('check', '')}</button>
-            <div class="goal-body" data-reto="${r.id}" style="cursor:pointer">
-              <div style="font-weight:500;font-size:15px;${r.done ? 'color:var(--text-2)' : ''}">${esc(r.text)}</div>
-              ${r.detalle ? `<div class="muted" style="font-size:13px;margin-top:2px">${esc(r.detalle)}</div>` : ''}
-            </div>
-          </div>`).join('') : '<div class="empty">Añade tus retos profesionales del año.</div>'}
-      </div>
       <div class="card"><div class="hero">${ring(pct)}
         <div><div class="t">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
         <div class="s">${isCurrent ? `Quedan ${Math.ceil((end - now) / 86400000)} días del año` : ''}</div>
@@ -464,15 +453,7 @@
   }
   function bindResumen(v) {
     $('#editLema', v).addEventListener('click', () => lemaSheet());
-    $('#addReto', v).addEventListener('click', () => retoSheet(null));
     $('#quickAdd', v).addEventListener('click', () => quickAddSheet());
-    $$('[data-reto]', v).forEach((el) => el.addEventListener('click', () => retoSheet(Y().retos.find((r) => r.id === el.dataset.reto))));
-    $$('[data-reto-check]', v).forEach((b) => b.addEventListener('click', () => {
-      const r = Y().retos.find((x) => x.id === b.dataset.retoCheck);
-      r.done = !r.done; r.date = r.done ? (r.date || todayISO()) : '';
-      if (r.done) toast('Reto conseguido');
-      commit();
-    }));
     $$('[data-go]', v).forEach((c) => c.addEventListener('click', () => {
       tab = c.dataset.go;
       $$('#tabbar button').forEach((x) => x.classList.toggle('active', x.dataset.tab === tab));
@@ -501,38 +482,6 @@
       });
     });
   }
-  function retoSheet(r) {
-    const y = Y();
-    const isNew = !r;
-    const d = r || { text: '', detalle: '', done: false };
-    openSheet(`
-      <h3>${isNew ? 'Nuevo reto profesional' : 'Editar reto'}</h3>
-      <form id="rf">
-        <label>Reto<input name="text" required value="${esc(d.text)}" placeholder="Ej. Ser libre" /></label>
-        <label>Descripción<textarea name="detalle" placeholder="Qué significa para ti">${esc(d.detalle)}</textarea></label>
-        <label class="inline-check"><input type="checkbox" name="done" ${d.done ? 'checked' : ''} /> Reto conseguido</label>
-        <div class="sheet-actions">
-          ${isNew ? '' : '<button type="button" class="btn danger" id="del">Eliminar</button>'}
-          <button type="submit" class="btn primary">Guardar</button>
-        </div>
-      </form>`, (el) => {
-      $('#rf', el).addEventListener('submit', (e) => {
-        e.preventDefault();
-        const f = e.target;
-        const vals = { text: f.text.value.trim(), detalle: f.detalle.value.trim(), done: f.done.checked };
-        if (!vals.text) return;
-        vals.date = vals.done ? ((r && r.date) || todayISO()) : '';
-        if (isNew) y.retos.push({ id: uid(), ...vals }); else Object.assign(r, vals);
-        closeSheet(); commit();
-      });
-      const del = $('#del', el);
-      if (del) del.addEventListener('click', () => {
-        if (!confirm('¿Eliminar este reto?')) return;
-        y.retos = y.retos.filter((x) => x.id !== r.id);
-        closeSheet(); commit();
-      });
-    });
-  }
   function quickAddSheet() {
     const opts = [
       ['viajes', 'Viaje', 'sky', () => tripSheet(null)],
@@ -544,7 +493,6 @@
       ['habitos', 'Hábito', 'accent', () => habitSheet(null)],
       ['fisica', 'Peso', 'accent', () => pesoSheet(null)],
       ['objetivos', 'Objetivo', 'green', () => goalSheet('fisica')],
-      ['objetivos', 'Reto profesional', 'accent', () => retoSheet(null)],
     ];
     openSheet(`<h3>¿Qué quieres apuntar?</h3><div class="qgrid">${opts.map((o, i) => `<button class="qbtn" data-q="${i}">${badge(o[0], o[2])}<span>${o[1]}</span></button>`).join('')}</div>`, (el) => {
       $$('[data-q]', el).forEach((b) => b.addEventListener('click', () => { closeSheet(); opts[Number(b.dataset.q)][3](); }));
