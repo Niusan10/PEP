@@ -384,11 +384,12 @@
     const now = new Date();
     const isCurrent = year === now.getFullYear();
     const start = new Date(year, 0, 1), end = new Date(year + 1, 0, 1);
-    const pct = isCurrent ? Math.round(((now - start) / (end - start)) * 100) : (year < now.getFullYear() ? 100 : 0);
+    const timePct = isCurrent ? Math.round(((now - start) / (end - start)) * 100) : (year < now.getFullYear() ? 100 : 0);
     const goals = AREAS.flatMap((a) => y.objetivos[a.key]);
     const goalsSet = goals.filter((g) => g.text.trim()).length;
     const goalsDone = goals.filter((g) => g.done).length;
     const goalsTotal = Math.max(6, goals.filter((g) => g.text.trim()).length);
+    const pct = Math.round((goalsDone / goalsTotal) * 100);
     const hc = (k) => y.habitos.filter((h) => h.status === k).length;
     const trips = yearList(y.viajes, 'inicio');
     const tripMonths = new Set(trips.map((t) => monthOf(t.inicio))).size;
@@ -410,11 +411,11 @@
       <div class="section-head"><div class="kicker">Palabra ${year}</div>
         <h2 class="${y.lema ? 'palabra' : ''}">${y.lema ? esc(y.lema) : 'Resumen del año'}</h2>
         <p><button class="linkbtn" id="editLema">${y.lema ? 'Cambiar palabra' : '+ Elegir la palabra del año'}</button></p></div>
-      <div class="card"><div class="hero">${ring(pct)}
-        <div><div class="t">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)}` : (pct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
-        <div class="s">${isCurrent ? `Quedan ${Math.ceil((end - now) / 86400000)} días del año` : ''}</div>
-        <div class="progress green" style="margin-top:10px"><i style="width:${(goalsDone / goalsTotal) * 100}%"></i></div>
-        <div class="s">${goalsDone} de ${goalsTotal} objetivos conseguidos</div></div></div></div>
+      <div class="card"><div class="hero">${ring(pct, 'var(--green)')}
+        <div><div class="t">${goalsDone} de ${goalsTotal} objetivos conseguidos</div>
+        <div class="s">${isCurrent ? `${now.getDate()} de ${MONTHS_FULL[thisMonth]} · semana ${Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)} · quedan ${Math.ceil((end - now) / 86400000)} días` : (timePct === 100 ? 'Año cerrado' : 'Año por empezar')}</div>
+        <div class="progress" style="margin-top:10px"><i style="width:${timePct}%"></i></div>
+        <div class="s">${timePct}% del año transcurrido</div></div></div></div>
 
       <div class="card link" data-go="oscuridad">
         <div class="card-title"><h3>${badge('check', 'green')}Rachas limpias</h3><span class="meta">${dark.length} recaídas en ${year}</span></div>
