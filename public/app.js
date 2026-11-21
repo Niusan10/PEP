@@ -417,7 +417,7 @@
       <div class="card link" data-go="oscuridad">
         <div class="card-title"><h3>${badge('check', 'green')}Rachas limpias</h3><span class="meta">${dark.length} recaídas en ${year}</span></div>
         <div class="streak-tiles">${DARK.map((d) => { const s = streakInfo(d.key);
-          const tone = !s ? '' : s.current >= 30 ? 'great' : s.current >= 7 ? 'good' : s.current === 0 ? 'zero' : '';
+          const tone = s ? streakTone(s.current) : '';
           return `<div class="st ${tone}">${s && s.isRecord ? '<span class="sr-badge sm">Récord</span>' : ''}
             <div class="st-num">${s ? s.current : '—'}</div><div class="st-unit">${s ? (s.current === 1 ? 'día' : 'días') : ''}</div>
             <div class="st-lbl">${SIN_LABEL[d.key]}</div>
@@ -880,6 +880,8 @@
   // ----- Rachas limpias -----
   const MILESTONES = [7, 15, 30, 60, 90, 180, 365, 730];
   const SIN_LABEL = { borrachera: 'sin borracheras', atracon: 'sin atracones', malo: 'sin ponerme malo', gluten: 'sin gluten', nohealthy: 'comiendo sano' };
+  // Colores de racha: menos de 3 días en rojo, de 3 a 9 normal, 10 o más en verde
+  const streakTone = (n) => (n >= 10 ? 'good' : n < 3 ? 'zero' : '');
   function streakInfo(tipo) {
     const today = todayISO();
     const dates = Array.from(new Set(Object.values(state.years).flatMap((yy) => (yy.oscuridad || [])
@@ -901,7 +903,7 @@
       <div class="sr-num"><b>—</b></div><div class="sr-lbl">${SIN_LABEL[d.key]}</div><div class="sr-sub">Sin registros todavía</div></div></div>`;
     const target = s.isRecord ? (s.next || s.current) : s.prevBest;
     const pct = target ? Math.min(100, (s.current / target) * 100) : 100;
-    const tone = s.current >= 30 ? 'great' : s.current >= 7 ? 'good' : s.current === 0 ? 'zero' : '';
+    const tone = streakTone(s.current);
     return `<div class="streak-row ${tone} ${big ? 'big' : ''}">
       <div class="sr-icon">${ic(d.icon)}</div>
       <div class="sr-main">
