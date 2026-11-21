@@ -421,7 +421,7 @@
           return `<div class="st ${tone}">${s && s.isRecord ? '<span class="sr-badge sm">Récord</span>' : ''}
             <div class="st-num">${s ? s.current : '—'}</div><div class="st-unit">${s ? (s.current === 1 ? 'día' : 'días') : ''}</div>
             <div class="st-lbl">${SIN_LABEL[d.key]}</div>
-            ${s ? `<div class="st-sub">${s.isRecord ? (s.next ? `meta ${s.next}` : 'máximo') : `récord ${s.prevBest}`}</div>` : ''}</div>`; }).join('')}</div>
+            ${s ? `<div class="st-sub">${s.fromStart && !s.current ? 'empiezas hoy' : s.isRecord ? (s.next ? `meta ${s.next}` : 'máximo') : `récord ${s.prevBest}`}</div>` : ''}</div>`; }).join('')}</div>
       </div>
 
       <div class="card link" data-go="objetivos">
@@ -882,12 +882,17 @@
   const SIN_LABEL = { borrachera: 'sin borracheras', atracon: 'sin atracones', malo: 'sin ponerme malo', gluten: 'sin gluten', nohealthy: 'comiendo sano' };
   // Colores de racha: menos de 3 días en rojo, de 3 a 9 normal, 10 o más en verde
   const streakTone = (n) => (n >= 10 ? 'good' : n < 3 ? 'zero' : '');
+  // KPIs que cuentan desde una fecha de inicio aunque aún no haya registros
+  const STREAK_START = { gluten: '2026-11-21', nohealthy: '2026-11-21' };
   function streakInfo(tipo) {
     const today = todayISO();
-    const dates = Array.from(new Set(Object.values(state.years).flatMap((yy) => (yy.oscuridad || [])
-      .filter((x) => x.tipo === tipo && x.fecha && x.fecha <= today).map((x) => x.fecha)))).sort();
+    const recs = Object.values(state.years).flatMap((yy) => (yy.oscuridad || [])
+      .filter((x) => x.tipo === tipo && x.fecha && x.fecha <= today).map((x) => x.fecha));
+    const start = STREAK_START[tipo] && STREAK_START[tipo] <= today ? STREAK_START[tipo] : null;
+    const dates = Array.from(new Set(start ? [start, ...recs] : recs)).sort();
     if (!dates.length) return null;
     const last = dates[dates.length - 1];
+    const fromStart = last === start && !recs.includes(start);
     const current = daysBetween(last, today);
     let best = 0;
     for (let i = 1; i < dates.length; i++) best = Math.max(best, daysBetween(dates[i - 1], dates[i]));
@@ -895,7 +900,7 @@
     best = Math.max(best, current);
     const next = MILESTONES.find((m) => m > current) || null;
     const isRecord = current > 0 && current >= prevBest;
-    return { last, current, best, prevBest, next, isRecord };
+    return { last, current, best, prevBest, next, isRecord, fromStart };
   }
   function streakRow(d, big) {
     const s = streakInfo(d.key);
@@ -911,9 +916,9 @@
           ${s.isRecord ? '<span class="sr-badge">Récord</span>' : ''}</div>
         <div class="sr-lbl">${SIN_LABEL[d.key]}</div>
         <div class="progress sr-bar"><i style="width:${pct}%"></i></div>
-        <div class="sr-sub">${s.isRecord
+        <div class="sr-sub">${s.fromStart && !s.current ? 'Empiezas hoy, a por la racha' : s.isRecord
           ? (s.next ? `Superando tu récord · próxima meta: ${s.next} días` : 'Tu mejor racha de siempre')
-          : `Récord: ${s.prevBest} días · te faltan ${s.prevBest - s.current} para batirlo`}${big ? ` · última vez el ${fmtDate(s.last)}` : ''}</div>
+          : `Récord: ${s.prevBest} días · te faltan ${s.prevBest - s.current} para batirlo`}${big ? (s.fromStart ? ` · contando desde el ${fmtDate(s.last)}` : ` · última vez el ${fmtDate(s.last)}`) : ''}</div>
       </div>
     </div>`;
   }
