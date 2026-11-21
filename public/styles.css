@@ -228,7 +228,10 @@ label > input, label > textarea, label > select { margin-top: 6px; }
 .months .bar.zero { background: var(--surface-3) !important; }
 
 /* Oscuridad */
-.dark-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.dark-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 12px; }
+/* 5 KPIs: 3 arriba y 2 abajo, a todo el ancho */
+.dark-grid > *, .streak-tiles > * { grid-column: span 2; }
+.dark-grid > :nth-child(n+4), .streak-tiles > :nth-child(n+4) { grid-column: span 3; }
 .dark-btn { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 14px 10px 12px; text-align: left; cursor: pointer;
   display: flex; flex-direction: column; gap: 2px; transition: border-color .15s; }
 .dark-btn:hover { border-color: var(--line-2); }
@@ -364,7 +367,7 @@ body.side-open .side-backdrop { opacity: 1; pointer-events: auto; }
 .sr-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .sr-badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #1a1305; background: var(--gold); padding: 4px 9px; border-radius: 99px; flex: none; }
 .sr-badge.sm { position: absolute; top: 8px; right: 8px; font-size: 9px; padding: 3px 7px; }
-.streak-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.streak-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .st { position: relative; background: var(--surface-2); border-radius: 12px; padding: 14px 10px 12px; text-align: center; --tone: var(--text); }
 .st.good, .st.great { --tone: var(--green); background: var(--green-soft); }
 .st.zero { --tone: var(--red); background: var(--red-soft); }

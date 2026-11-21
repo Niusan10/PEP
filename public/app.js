@@ -34,6 +34,8 @@
     borrachera: '<path d="M7.5 3.5h9l-.6 5.2a3.9 3.9 0 0 1-7.8 0z"/><path d="M12 12.6v7.9M8.5 20.5h7"/>',
     atracon: '<path d="M7 3.5v17M4.5 3.5v5a2.5 2.5 0 0 0 5 0v-5"/><path d="M17.5 20.5v-17c-2 0-3.5 2.2-3.5 5.5s1.5 4.5 3.5 4.5"/>',
     malo: '<path d="M14 14.6V5.5a2 2 0 0 0-4 0v9.1a4 4 0 1 0 4 0z"/><path d="M12 15v-4"/>',
+    gluten: '<path d="M12 21V6"/><path d="M12 9.5c-2.2 0-3.6-1.3-3.6-3.5 2.2 0 3.6 1.3 3.6 3.5zM12 9.5c2.2 0 3.6-1.3 3.6-3.5-2.2 0-3.6 1.3-3.6 3.5zM12 13.5c-2.2 0-3.6-1.3-3.6-3.5 2.2 0 3.6 1.3 3.6 3.5zM12 13.5c2.2 0 3.6-1.3 3.6-3.5-2.2 0-3.6 1.3-3.6 3.5zM12 17.5c-2.2 0-3.6-1.3-3.6-3.5 2.2 0 3.6 1.3 3.6 3.5zM12 17.5c2.2 0 3.6-1.3 3.6-3.5-2.2 0-3.6 1.3-3.6 3.5zM12 6V3"/>',
+    nohealthy: '<path d="M12 8c-1.6-1-5.6-1.1-6.8 2.4-1.3 3.6 1 9.4 4.3 9.9 1 .2 1.7-.4 2.5-.4s1.5.6 2.5.4c3.3-.5 5.6-6.3 4.3-9.9C17.6 6.9 13.6 7 12 8z"/><path d="M12 8c0-2 .9-3.6 2.8-4.4"/>',
     dar: '<path d="M12 20s-7.5-4.5-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.5 12 20 12 20z"/>',
     decision: '<path d="M13.5 2.8L5 13.5h6l-1 7.7 8.5-10.7h-6z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -53,6 +55,8 @@
     { key: 'borrachera', label: 'Borracheras', one: 'Borrachera', icon: 'borrachera' },
     { key: 'atracon', label: 'Atracones', one: 'Atracón', icon: 'atracon' },
     { key: 'malo', label: 'Ponerme malo', one: 'Ponerme malo', icon: 'malo' },
+    { key: 'gluten', label: 'Gluten', one: 'Gluten', icon: 'gluten' },
+    { key: 'nohealthy', label: 'NO healthy food', one: 'NO healthy food', icon: 'nohealthy' },
   ];
   const TABS = [
     { key: 'resumen', label: 'Resumen' },
@@ -494,6 +498,8 @@
       ['borrachera', 'Borrachera', 'night', () => darkSheet(null, 'borrachera')],
       ['atracon', 'Atracón', 'night', () => darkSheet(null, 'atracon')],
       ['malo', 'Ponerme malo', 'night', () => darkSheet(null, 'malo')],
+      ['gluten', 'Gluten', 'night', () => darkSheet(null, 'gluten')],
+      ['nohealthy', 'NO healthy food', 'night', () => darkSheet(null, 'nohealthy')],
       ['habitos', 'Hábito', 'accent', () => habitSheet(null)],
       ['fisica', 'Peso', 'accent', () => pesoSheet(null)],
       ['objetivos', 'Objetivo', 'green', () => goalSheet('fisica')],
@@ -873,7 +879,7 @@
 
   // ----- Rachas limpias -----
   const MILESTONES = [7, 15, 30, 60, 90, 180, 365, 730];
-  const SIN_LABEL = { borrachera: 'sin borracheras', atracon: 'sin atracones', malo: 'sin ponerme malo' };
+  const SIN_LABEL = { borrachera: 'sin borracheras', atracon: 'sin atracones', malo: 'sin ponerme malo', gluten: 'sin gluten', nohealthy: 'comiendo sano' };
   function streakInfo(tipo) {
     const today = todayISO();
     const dates = Array.from(new Set(Object.values(state.years).flatMap((yy) => (yy.oscuridad || [])
